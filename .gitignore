@@ -1,6 +1,5 @@
-bin
-data
-db
-dbd
 include
 lib
+O.*
+cmake-build-*/
+.idea/
