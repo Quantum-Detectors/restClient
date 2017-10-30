@@ -5,7 +5,6 @@
 #include <sstream>
 
 #include <frozen.h>
-#include <ADDriver.h>
 #include <math.h>
 #include "eigerParam.h"
 
