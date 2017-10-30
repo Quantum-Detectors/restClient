@@ -1,5 +1,5 @@
-#ifndef EIGER_PARAM_H
-#define EIGER_PARAM_H
+#ifndef REST_PARAM_H
+#define REST_PARAM_H
 
 #include <string>
 #include <vector>
@@ -11,22 +11,22 @@
 
 typedef enum
 {
-    EIGER_P_UNINIT,
-    EIGER_P_BOOL,
-    EIGER_P_INT,
-    EIGER_P_UINT,
-    EIGER_P_DOUBLE,
-    EIGER_P_STRING,
-    EIGER_P_ENUM,
-    EIGER_P_COMMAND,
-}eiger_param_type_t;
+    REST_P_UNINIT,
+    REST_P_BOOL,
+    REST_P_INT,
+    REST_P_UINT,
+    REST_P_DOUBLE,
+    REST_P_STRING,
+    REST_P_ENUM,
+    REST_P_COMMAND,
+}rest_param_type_t;
 
 typedef enum
 {
-    EIGER_ACC_RO,
-    EIGER_ACC_RW,
-    EIGER_ACC_WO
-}eiger_access_mode_t;
+    REST_ACC_RO,
+    REST_ACC_RW,
+    REST_ACC_WO
+}rest_access_mode_t;
 
 typedef struct
 {
@@ -36,15 +36,15 @@ typedef struct
         int valInt;
         double valDouble;
     };
-}eiger_min_max_t;
+}rest_min_max_t;
 
-class EigerParamSet;
+class RestParamSet;
 
-class EigerParam
+class RestParam
 {
 
 private:
-    EigerParamSet *mSet;
+    RestParamSet *mSet;
     std::string mAsynName;
     asynParamType mAsynType;
     sys_t mSubSystem;
@@ -52,20 +52,20 @@ private:
     bool mRemote;
 
     int mAsynIndex;
-    eiger_param_type_t mType;
-    eiger_access_mode_t mAccessMode;
-    eiger_min_max_t mMin, mMax;
+    rest_param_type_t mType;
+    rest_access_mode_t mAccessMode;
+    rest_min_max_t mMin, mMax;
     std::vector <std::string> mEnumValues, mCriticalValues;
     double mEpsilon;
     bool mCustomEnum;
 
     std::vector<std::string> parseArray (struct json_token *tokens,
             std::string const & name = "");
-    int parseType (struct json_token *tokens, eiger_param_type_t & type);
+    int parseType (struct json_token *tokens, rest_param_type_t & type);
     int parseAccessMode (struct json_token *tokens,
-            eiger_access_mode_t & accessMode);
+            rest_access_mode_t & accessMode);
     int parseMinMax (struct json_token *tokens, std::string const & key,
-            eiger_min_max_t & minMax);
+            rest_min_max_t & minMax);
 
     int parseValue (struct json_token *tokens, std::string & rawValue);
     int parseValue (std::string const & rawValue, bool & value);
@@ -92,7 +92,7 @@ private:
     int basePut (std::string const & rawValue, int timeout = DEFAULT_TIMEOUT);
 
 public:
-    EigerParam (EigerParamSet *set, std::string const & asynName,
+    RestParam (RestParamSet *set, std::string const & asynName,
             asynParamType asynType, sys_t ss = (sys_t) 0,
             std::string const & name = "");
 
@@ -124,35 +124,32 @@ public:
     int put (const char *value,         int timeout = DEFAULT_TIMEOUT);
 };
 
-typedef std::map<std::string, EigerParam*> eiger_param_map_t;
-typedef std::map<int, EigerParam*> eiger_asyn_map_t;
+typedef std::map<std::string, RestParam*> rest_param_map_t;
+typedef std::map<int, RestParam*> rest_asyn_map_t;
 
-class EigerParamSet
+class RestParamSet
 {
 private:
     asynPortDriver *mPortDriver;
     RestAPI *mApi;
     asynUser *mUser;
 
-    eiger_param_map_t mDetConfigMap;
-    eiger_asyn_map_t mAsynMap;
+    rest_param_map_t mDetConfigMap;
+    rest_asyn_map_t mAsynMap;
 
 public:
-    EigerParamSet (asynPortDriver *portDriver, RestAPI *api, asynUser *user);
+    RestParamSet (asynPortDriver *portDriver, RestAPI *api, asynUser *user);
 
-    EigerParam *create(std::string const & asynName, asynParamType asynType,
+    RestParam *create(std::string const & asynName, asynParamType asynType,
             sys_t ss = (sys_t)0, std::string const & name = "");
 
     asynPortDriver *getPortDriver (void);
     RestAPI *getApi (void);
-    EigerParam *getByName (std::string const & name);
-    EigerParam *getByIndex (int index);
+    RestParam *getByName (std::string const & name);
+    RestParam *getByIndex (int index);
     asynUser *getUser (void);
     int fetchAll (void);
 
     int fetchParams (std::vector<std::string> const & params);
 };
-
-
-
 #endif

@@ -34,7 +34,7 @@ using std::vector;
 using std::map;
 using std::pair;
 
-vector<string> EigerParam::parseArray (struct json_token *tokens,
+vector<string> RestParam::parseArray (struct json_token *tokens,
         string const & name)
 {
     vector<string> arrayValues;
@@ -58,7 +58,7 @@ vector<string> EigerParam::parseArray (struct json_token *tokens,
     return arrayValues;
 }
 
-int EigerParam::parseType (struct json_token *tokens, eiger_param_type_t & type)
+int RestParam::parseType (struct json_token *tokens, rest_param_type_t & type)
 {
     const char *functionName = "parseType";
 
@@ -84,13 +84,13 @@ int EigerParam::parseType (struct json_token *tokens, eiger_param_type_t & type)
     // Map type to asynParamType
     switch(typeStr[0])
     {
-    case 's': type = EIGER_P_STRING;  break;
-    case 'f': type = EIGER_P_DOUBLE;  break;
-    case 'b': type = EIGER_P_BOOL;    break;
-    case 'u': type = EIGER_P_UINT;    break;
-    case 'i': type = EIGER_P_INT;     break;
-    case 'e': type = EIGER_P_ENUM;    break;
-    case 'c': type = EIGER_P_COMMAND; break;
+    case 's': type = REST_P_STRING;  break;
+    case 'f': type = REST_P_DOUBLE;  break;
+    case 'b': type = REST_P_BOOL;    break;
+    case 'u': type = REST_P_UINT;    break;
+    case 'i': type = REST_P_INT;     break;
+    case 'e': type = REST_P_ENUM;    break;
+    case 'c': type = REST_P_COMMAND; break;
     default:
         ERR_ARGS("unrecognized value type '%s'", typeStr.c_str());
         return EXIT_FAILURE;
@@ -98,8 +98,8 @@ int EigerParam::parseType (struct json_token *tokens, eiger_param_type_t & type)
     return EXIT_SUCCESS;
 }
 
-int EigerParam::parseAccessMode (struct json_token *tokens,
-        eiger_access_mode_t & accessMode)
+int RestParam::parseAccessMode (struct json_token *tokens,
+        rest_access_mode_t & accessMode)
 {
     const char *functionName = "parseAccessMode";
 
@@ -109,11 +109,11 @@ int EigerParam::parseAccessMode (struct json_token *tokens,
 
     string accessModeStr(t->ptr, t->len);
     if(accessModeStr == "r")
-        accessMode = EIGER_ACC_RO;
+        accessMode = REST_ACC_RO;
     else if(accessModeStr == "w")
-        accessMode = EIGER_ACC_WO;
+        accessMode = REST_ACC_WO;
     else if(accessModeStr == "rw")
-        accessMode = EIGER_ACC_RW;
+        accessMode = REST_ACC_RW;
     else
     {
         ERR_ARGS("invalid access mode '%s", accessModeStr.c_str());
@@ -123,8 +123,8 @@ int EigerParam::parseAccessMode (struct json_token *tokens,
     return EXIT_SUCCESS;
 }
 
-int EigerParam::parseMinMax (struct json_token *tokens, string const & key,
-        eiger_min_max_t & minMax)
+int RestParam::parseMinMax (struct json_token *tokens, string const & key,
+        rest_min_max_t & minMax)
 {
     const char *functionName = "parseMinMax";
 
@@ -161,7 +161,7 @@ int EigerParam::parseMinMax (struct json_token *tokens, string const & key,
     return EXIT_SUCCESS;
 }
 
-int EigerParam::parseValue (struct json_token *tokens, string & rawValue)
+int RestParam::parseValue (struct json_token *tokens, string & rawValue)
 {
     const char *functionName = "parseValue";
 
@@ -175,7 +175,7 @@ int EigerParam::parseValue (struct json_token *tokens, string & rawValue)
     return EXIT_SUCCESS;
 }
 
-int EigerParam::parseValue (string const & rawValue, bool & value)
+int RestParam::parseValue (string const & rawValue, bool & value)
 {
     const char *functionName = "parseValue";
 
@@ -191,7 +191,7 @@ int EigerParam::parseValue (string const & rawValue, bool & value)
     return EXIT_SUCCESS;
 }
 
-int EigerParam::parseValue (string const & rawValue, int & value)
+int RestParam::parseValue (string const & rawValue, int & value)
 {
     const char *functionName = "parseValue";
 
@@ -203,7 +203,7 @@ int EigerParam::parseValue (string const & rawValue, int & value)
     return EXIT_SUCCESS;
 }
 
-int EigerParam::parseValue (string const & rawValue, double & value)
+int RestParam::parseValue (string const & rawValue, double & value)
 {
     const char *functionName = "parseValue";
 
@@ -215,17 +215,17 @@ int EigerParam::parseValue (string const & rawValue, double & value)
     return EXIT_SUCCESS;
 }
 
-std::string EigerParam::toString (bool value)
+std::string RestParam::toString (bool value)
 {
-    if(mType == EIGER_P_ENUM)
+    if(mType == REST_P_ENUM)
         return toString(mEnumValues[(int) (!value)]);
 
     return value ? "true" : "false";
 }
 
-std::string EigerParam::toString (int value)
+std::string RestParam::toString (int value)
 {
-    if(mType == EIGER_P_ENUM)
+    if(mType == REST_P_ENUM)
         return toString(mEnumValues[value]);
 
     std::ostringstream os;
@@ -233,21 +233,21 @@ std::string EigerParam::toString (int value)
     return os.str();
 }
 
-std::string EigerParam::toString (double value)
+std::string RestParam::toString (double value)
 {
     std::ostringstream os;
     os << value;
     return os.str();
 }
 
-std::string EigerParam::toString (std::string const & value)
+std::string RestParam::toString (std::string const & value)
 {
     std::ostringstream os;
     os << "\"" << value << "\"";
     return os.str();
 }
 
-int EigerParam::getEnumIndex (std::string const & value, size_t & index)
+int RestParam::getEnumIndex (std::string const & value, size_t & index)
 {
     const char *functionName = "getEnumIndex";
     for(index = 0; index < mEnumValues.size(); ++index)
@@ -259,7 +259,7 @@ int EigerParam::getEnumIndex (std::string const & value, size_t & index)
     return EXIT_FAILURE;
 }
 
-bool EigerParam::isCritical (std::string const & value)
+bool RestParam::isCritical (std::string const & value)
 {
     size_t i;
     for(i = 0; i < mCriticalValues.size(); ++i)
@@ -268,45 +268,45 @@ bool EigerParam::isCritical (std::string const & value)
     return false;
 }
 
-int EigerParam::getParam (int & value)
+int RestParam::getParam (int & value)
 {
     return (int) mSet->getPortDriver()->getIntegerParam(mAsynIndex, &value);
 }
 
-int EigerParam::getParam (double & value)
+int RestParam::getParam (double & value)
 {
     return (int) mSet->getPortDriver()->getDoubleParam(mAsynIndex, &value);
 }
 
-int EigerParam::getParam (std::string & value)
+int RestParam::getParam (std::string & value)
 {
     return (int) mSet->getPortDriver()->getStringParam(mAsynIndex, value);
 }
 
-int EigerParam::setParam (int value)
+int RestParam::setParam (int value)
 {
     return (int) mSet->getPortDriver()->setIntegerParam(mAsynIndex, value);
 }
 
-int EigerParam::setParam (double value)
+int RestParam::setParam (double value)
 {
     return (int) mSet->getPortDriver()->setDoubleParam(mAsynIndex, value);
 }
 
-int EigerParam::setParam (std::string const & value)
+int RestParam::setParam (std::string const & value)
 {
     return (int) mSet->getPortDriver()->setStringParam(mAsynIndex, value);
 }
 
 
-EigerParam::EigerParam (EigerParamSet *set, string const & asynName,
+RestParam::RestParam (RestParamSet *set, string const & asynName,
         asynParamType asynType, sys_t ss, string const & name)
 : mSet(set), mAsynName(asynName), mAsynType(asynType), mSubSystem(ss),
   mName(name), mRemote(!mName.empty()), mAsynIndex(-1),
-  mType(EIGER_P_UNINIT), mAccessMode(), mMin(), mMax(), mEnumValues(),
+  mType(REST_P_UNINIT), mAccessMode(), mMin(), mMax(), mEnumValues(),
   mCriticalValues(), mEpsilon(0.0), mCustomEnum(false)
 {
-    const char *functionName = "EigerParam";
+    const char *functionName = "RestParam";
 
     asynStatus status;
 
@@ -325,9 +325,9 @@ EigerParam::EigerParam (EigerParamSet *set, string const & asynName,
     {
         switch(asynType)
         {
-        case asynParamInt32:   mType = EIGER_P_INT;    break;
-        case asynParamFloat64: mType = EIGER_P_DOUBLE; break;
-        case asynParamOctet:   mType = EIGER_P_STRING; break;
+        case asynParamInt32:   mType = REST_P_INT;    break;
+        case asynParamFloat64: mType = REST_P_DOUBLE; break;
+        case asynParamOctet:   mType = REST_P_STRING; break;
         default:
             ERR_ARGS("[param=%s] invalid asyn type %d", mAsynName.c_str(),
                     (int)asynType);
@@ -336,28 +336,28 @@ EigerParam::EigerParam (EigerParamSet *set, string const & asynName,
     }
     else if(ss == SSCommand || ss == SSFWCommand || ss == SSSysCommand)
     {
-        mType = EIGER_P_COMMAND;
-        mAccessMode = EIGER_ACC_WO;
+        mType = REST_P_COMMAND;
+        mAccessMode = REST_ACC_WO;
     }
 }
 
-void EigerParam::setEpsilon (double epsilon)
+void RestParam::setEpsilon (double epsilon)
 {
     mEpsilon = epsilon;
 }
 
-int EigerParam::getIndex (void)
+int RestParam::getIndex (void)
 {
     return mAsynIndex;
 }
 
-void EigerParam::setEnumValues (vector<string> const & values)
+void RestParam::setEnumValues (vector<string> const & values)
 {
     mEnumValues = values;
     mCustomEnum = true;
 }
 
-int EigerParam::get (bool & value)
+int RestParam::get (bool & value)
 {
     if(mAsynType == asynParamInt32)
     {
@@ -377,7 +377,7 @@ int EigerParam::get (bool & value)
     return EXIT_SUCCESS;
 }
 
-int EigerParam::get (int & value)
+int RestParam::get (int & value)
 {
     if(mAsynType == asynParamInt32)
         getParam(value);
@@ -397,14 +397,14 @@ int EigerParam::get (int & value)
     return EXIT_SUCCESS;
 }
 
-int EigerParam::get (double & value)
+int RestParam::get (double & value)
 {
     return (int) getParam(value);
 }
 
-int EigerParam::get (std::string & value)
+int RestParam::get (std::string & value)
 {
-    if(mType == EIGER_P_ENUM && mAsynType == asynParamInt32)
+    if(mType == REST_P_ENUM && mAsynType == asynParamInt32)
     {
         int index;
         int status = getParam(index);
@@ -415,7 +415,7 @@ int EigerParam::get (std::string & value)
     return (int) getParam(value);
 }
 
-int EigerParam::baseFetch (string & rawValue, int timeout)
+int RestParam::baseFetch (string & rawValue, int timeout)
 {
     const char *functionName = "baseFetch";
     if(!mRemote)
@@ -424,7 +424,7 @@ int EigerParam::baseFetch (string & rawValue, int timeout)
         return EXIT_FAILURE;
     }
 
-    if(mAccessMode == EIGER_ACC_WO)
+    if(mAccessMode == REST_ACC_WO)
         return EXIT_SUCCESS;
 
     string buffer;
@@ -440,7 +440,7 @@ int EigerParam::baseFetch (string & rawValue, int timeout)
         return EXIT_FAILURE;
     }
 
-    if(mType == EIGER_P_UNINIT)
+    if(mType == REST_P_UNINIT)
     {
         if(parseType(tokens, mType))
         {
@@ -454,27 +454,27 @@ int EigerParam::baseFetch (string & rawValue, int timeout)
         case SSCommand:
         case SSFWCommand:
         case SSSysCommand:
-            mAccessMode = EIGER_ACC_WO;
+            mAccessMode = REST_ACC_WO;
             break;
         case SSDetStatus:
         case SSFWStatus:
         case SSMonStatus:
         case SSStreamStatus:
-            mAccessMode = EIGER_ACC_RO;
+            mAccessMode = REST_ACC_RO;
             break;
         default:
             if(parseAccessMode(tokens, mAccessMode))
-                mAccessMode = EIGER_ACC_RO;
+                mAccessMode = REST_ACC_RO;
         }
 
         if(mCustomEnum)
-            mType = EIGER_P_ENUM;
+            mType = REST_P_ENUM;
         else
             mEnumValues = parseArray(tokens, "allowed_values");
         mCriticalValues = parseArray(tokens, "critical_values");
     }
 
-    if(mType == EIGER_P_INT || mType == EIGER_P_UINT || mType == EIGER_P_DOUBLE)
+    if(mType == REST_P_INT || mType == REST_P_UINT || mType == REST_P_DOUBLE)
     {
         if(parseMinMax(tokens, "min", mMin))
         {
@@ -490,7 +490,7 @@ int EigerParam::baseFetch (string & rawValue, int timeout)
             return EXIT_FAILURE;
         }
     }
-    else if(mType == EIGER_P_ENUM)
+    else if(mType == REST_P_ENUM)
     {
         mMin.exists = true;
         mMax.exists = true;
@@ -509,10 +509,10 @@ int EigerParam::baseFetch (string & rawValue, int timeout)
     return EXIT_SUCCESS;
 }
 
-int EigerParam::fetch (bool & value, int timeout)
+int RestParam::fetch (bool & value, int timeout)
 {
     const char *functionName = "fetch<bool>";
-    if(mRemote && mType != EIGER_P_COMMAND)
+    if(mRemote && mType != REST_P_COMMAND)
     {
         string rawValue;
         if(baseFetch(rawValue))
@@ -522,12 +522,12 @@ int EigerParam::fetch (bool & value, int timeout)
             return EXIT_FAILURE;
 
         }
-        if(mType == EIGER_P_BOOL)
+        if(mType == REST_P_BOOL)
         {
             if(parseValue(rawValue, value))
                 return EXIT_FAILURE;
         }
-        else if(mType == EIGER_P_ENUM)
+        else if(mType == REST_P_ENUM)
         {
             if(mEnumValues.size() != 2)
             {
@@ -560,10 +560,10 @@ int EigerParam::fetch (bool & value, int timeout)
     return get(value);
 }
 
-int EigerParam::fetch (int & value, int timeout)
+int RestParam::fetch (int & value, int timeout)
 {
     const char *functionName = "fetch<int>";
-    if(mRemote && mType != EIGER_P_COMMAND)
+    if(mRemote && mType != REST_P_COMMAND)
     {
         string rawValue;
         if(baseFetch(rawValue))
@@ -574,7 +574,7 @@ int EigerParam::fetch (int & value, int timeout)
 
         }
 
-        if(mType == EIGER_P_ENUM)
+        if(mType == REST_P_ENUM)
         {
             size_t index;
             if(getEnumIndex(rawValue, index))
@@ -582,14 +582,14 @@ int EigerParam::fetch (int & value, int timeout)
 
             value = (int) index;
         }
-        else if(mType == EIGER_P_BOOL)
+        else if(mType == REST_P_BOOL)
         {
             bool tempValue;
             if(parseValue(rawValue, tempValue))
                 return EXIT_FAILURE;
             value = (int) tempValue;
         }
-        else if(mType == EIGER_P_INT || mType == EIGER_P_UINT)
+        else if(mType == REST_P_INT || mType == REST_P_UINT)
         {
             if(parseValue(rawValue, value))
                 return EXIT_FAILURE;
@@ -613,12 +613,12 @@ int EigerParam::fetch (int & value, int timeout)
     return get(value);
 }
 
-int EigerParam::fetch (double & value, int timeout)
+int RestParam::fetch (double & value, int timeout)
 {
     const char *functionName = "fetch<double>";
-    if(mRemote && mType != EIGER_P_COMMAND)
+    if(mRemote && mType != REST_P_COMMAND)
     {
-        if(mType != EIGER_P_DOUBLE && mType != EIGER_P_UNINIT)
+        if(mType != REST_P_DOUBLE && mType != REST_P_UNINIT)
         {
             ERR_ARGS("[param=%s] unexpected type %d", mAsynName.c_str(),
                     mType);
@@ -648,14 +648,14 @@ int EigerParam::fetch (double & value, int timeout)
     return get(value);
 }
 
-int EigerParam::fetch (string & value, int timeout)
+int RestParam::fetch (string & value, int timeout)
 {
     const char *functionName = "fetch<string>";
 
-    if(mRemote && mType != EIGER_P_COMMAND)
+    if(mRemote && mType != REST_P_COMMAND)
     {
-        if(mType != EIGER_P_STRING && mType != EIGER_P_ENUM &&
-           mType != EIGER_P_UNINIT)
+        if(mType != REST_P_STRING && mType != REST_P_ENUM &&
+           mType != REST_P_UNINIT)
             return EXIT_FAILURE;
 
         if(baseFetch(value))
@@ -681,7 +681,7 @@ int EigerParam::fetch (string & value, int timeout)
     return get(value);
 }
 
-int EigerParam::fetch (void)
+int RestParam::fetch (void)
 {
     switch(mAsynType)
     {
@@ -707,11 +707,11 @@ int EigerParam::fetch (void)
     return EXIT_SUCCESS;
 }
 
-int EigerParam::basePut (const std::string & rawValue, int timeout)
+int RestParam::basePut (const std::string & rawValue, int timeout)
 {
     const char *functionName = "basePut";
     FLOW_ARGS("'%s'", rawValue.c_str());
-    if(mAccessMode == EIGER_ACC_RO)
+    if(mAccessMode == REST_ACC_RO)
     {
         ERR_ARGS("[param=%s] can't write to read-only parameter", mAsynName.c_str());
         return EXIT_FAILURE;
@@ -741,7 +741,7 @@ int EigerParam::basePut (const std::string & rawValue, int timeout)
     return EXIT_SUCCESS;
 }
 
-int EigerParam::put (bool value, int timeout)
+int RestParam::put (bool value, int timeout)
 {
     const char *functionName = "put<bool>";
     FLOW_ARGS("%d", value);
@@ -751,14 +751,14 @@ int EigerParam::put (bool value, int timeout)
         return EXIT_SUCCESS;
     }
 
-    if(mType == EIGER_P_UNINIT && fetch())
+    if(mType == REST_P_UNINIT && fetch())
         return EXIT_FAILURE;
 
-    if(mType != EIGER_P_BOOL && mType != EIGER_P_ENUM)
+    if(mType != REST_P_BOOL && mType != REST_P_ENUM)
         return EXIT_FAILURE;
 
     int status;
-    if(mType == EIGER_P_ENUM)
+    if(mType == REST_P_ENUM)
     {
         if(mEnumValues.size() != 2)
             return EXIT_FAILURE;
@@ -782,19 +782,19 @@ int EigerParam::put (bool value, int timeout)
     return EXIT_SUCCESS;
 }
 
-int EigerParam::put (int value, int timeout)
+int RestParam::put (int value, int timeout)
 {
     const char *functionName = "put<int>";
     int status;
     FLOW_ARGS("%d", value);
     if(mRemote)
     {
-        if(mType == EIGER_P_UNINIT && fetch())
+        if(mType == REST_P_UNINIT && fetch())
             return EXIT_FAILURE;
 
-        if(mType != EIGER_P_BOOL && mType != EIGER_P_INT &&
-           mType != EIGER_P_UINT && mType != EIGER_P_ENUM &&
-           mType != EIGER_P_COMMAND)
+        if(mType != REST_P_BOOL && mType != REST_P_INT &&
+           mType != REST_P_UINT && mType != REST_P_ENUM &&
+           mType != REST_P_COMMAND)
         {
             ERR_ARGS("[param=%s] expected bool, int, uint or enum",
                     mAsynName.c_str());
@@ -809,10 +809,10 @@ int EigerParam::put (int value, int timeout)
             value = mMax.valInt;
 
         // Protect against trying to write negative values to an unsigned int
-        if(mType == EIGER_P_UINT && value < 0)
+        if(mType == REST_P_UINT && value < 0)
             value = 0;
 
-        if(mType == EIGER_P_BOOL)
+        if(mType == REST_P_BOOL)
             status = basePut(toString((bool)value), timeout);
         else
             status = basePut(toString(value), timeout);
@@ -839,7 +839,7 @@ int EigerParam::put (int value, int timeout)
     return EXIT_SUCCESS;
 }
 
-int EigerParam::put (double value, int timeout)
+int RestParam::put (double value, int timeout)
 {
     const char *functionName = "put<double>";
     FLOW_ARGS("%lf", value);
@@ -853,10 +853,10 @@ int EigerParam::put (double value, int timeout)
 
     if(mRemote)
     {
-        if(mType == EIGER_P_UNINIT && fetch())
+        if(mType == REST_P_UNINIT && fetch())
             return EXIT_FAILURE;
 
-        if(mType != EIGER_P_DOUBLE)
+        if(mType != REST_P_DOUBLE)
             return EXIT_FAILURE;
 
         // Clamp value
@@ -885,7 +885,7 @@ int EigerParam::put (double value, int timeout)
     return EXIT_SUCCESS;
 }
 
-int EigerParam::put (string const & value, int timeout)
+int RestParam::put (string const & value, int timeout)
 {
     const char *functionName = "put<string>";
     FLOW_ARGS("%s", value.c_str());
@@ -895,14 +895,14 @@ int EigerParam::put (string const & value, int timeout)
         return EXIT_SUCCESS;
     }
 
-    if(mType == EIGER_P_UNINIT && fetch())
+    if(mType == REST_P_UNINIT && fetch())
         return EXIT_FAILURE;
 
-    if(mType != EIGER_P_STRING && mType != EIGER_P_ENUM)
+    if(mType != REST_P_STRING && mType != REST_P_ENUM)
         return EXIT_FAILURE;
 
     size_t index;
-    if(mType == EIGER_P_ENUM && getEnumIndex(value, index))
+    if(mType == REST_P_ENUM && getEnumIndex(value, index))
         return EXIT_FAILURE;
 
     if(basePut(toString(value), timeout))
@@ -924,20 +924,20 @@ int EigerParam::put (string const & value, int timeout)
     return EXIT_SUCCESS;
 }
 
-int EigerParam::put (const char * value, int timeout)
+int RestParam::put (const char * value, int timeout)
 {
     return put(string(value), timeout);
 }
 
-EigerParamSet::EigerParamSet (asynPortDriver *portDriver, RestAPI *api,
+RestParamSet::RestParamSet (asynPortDriver *portDriver, RestAPI *api,
         asynUser *user)
 : mPortDriver(portDriver), mApi(api), mUser(user), mDetConfigMap(), mAsynMap()
 {}
 
-EigerParam *EigerParamSet::create(string const & asynName,
+RestParam *RestParamSet::create(string const & asynName,
         asynParamType asynType, sys_t ss, string const & name)
 {
-    EigerParam *p = new EigerParam(this, asynName, asynType, ss, name);
+    RestParam *p = new RestParam(this, asynName, asynType, ss, name);
     if(!name.empty() && ss == SSDetConfig)
         mDetConfigMap.insert(std::make_pair(name, p));
 
@@ -945,58 +945,58 @@ EigerParam *EigerParamSet::create(string const & asynName,
     return p;
 }
 
-asynPortDriver *EigerParamSet::getPortDriver (void)
+asynPortDriver *RestParamSet::getPortDriver (void)
 {
     return mPortDriver;
 }
 
-RestAPI *EigerParamSet::getApi (void)
+RestAPI *RestParamSet::getApi (void)
 {
     return mApi;
 }
 
-EigerParam *EigerParamSet::getByName (string const & name)
+RestParam *RestParamSet::getByName (string const & name)
 {
-    eiger_param_map_t::iterator item(mDetConfigMap.find(name));
+    rest_param_map_t::iterator item(mDetConfigMap.find(name));
 
     if(item != mDetConfigMap.end())
         return item->second;
     return NULL;
 }
 
-EigerParam *EigerParamSet::getByIndex (int index)
+RestParam *RestParamSet::getByIndex (int index)
 {
-    eiger_asyn_map_t::iterator item(mAsynMap.find(index));
+    rest_asyn_map_t::iterator item(mAsynMap.find(index));
 
     if(item != mAsynMap.end())
         return item->second;
     return NULL;
 }
 
-asynUser *EigerParamSet::getUser (void)
+asynUser *RestParamSet::getUser (void)
 {
     return mUser;
 }
 
-int EigerParamSet::fetchAll (void)
+int RestParamSet::fetchAll (void)
 {
     int status = EXIT_SUCCESS;
 
-    eiger_asyn_map_t::iterator it;
+    rest_asyn_map_t::iterator it;
     for(it = mAsynMap.begin(); it != mAsynMap.end(); ++it)
         status |= it->second->fetch();
 
     return status;
 }
 
-int EigerParamSet::fetchParams (vector<string> const & params)
+int RestParamSet::fetchParams (vector<string> const & params)
 {
     int status = EXIT_SUCCESS;
     vector<string>::const_iterator param;
 
     for(param = params.begin(); param != params.end(); ++param)
     {
-        EigerParam *p = getByName(*param);
+        RestParam *p = getByName(*param);
         if(p)
             status |= p->fetch();
     }
