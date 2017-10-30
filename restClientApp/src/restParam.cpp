@@ -6,7 +6,7 @@
 
 #include <frozen.h>
 #include <math.h>
-#include "eigerParam.h"
+#include "restParam.h"
 
 // Error message formatters
 #define ERR(msg) asynPrint(mSet->getUser(), ASYN_TRACE_ERROR,\

@@ -8,10 +8,10 @@ USR_INCLUDES += -I$(TOP)/restClientApp/frozenSrc
 LIBRARY_IOC = restClient
 
 LIB_SRCS += restApi.cpp
-LIB_SRCS += eigerParam.cpp
+LIB_SRCS += restParam.cpp
 
 INC += restApi.h
-INC += eigerParam.h
+INC += restParam.h
 
 LIB_LIBS += asyn
 
