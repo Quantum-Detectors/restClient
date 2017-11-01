@@ -7,36 +7,8 @@
 #include <asynPortDriver.h>
 #include <frozen.h>
 
+#include "restDefinitions.h"
 #include "restApi.h"
-
-typedef enum
-{
-    REST_P_UNINIT,
-    REST_P_BOOL,
-    REST_P_INT,
-    REST_P_UINT,
-    REST_P_DOUBLE,
-    REST_P_STRING,
-    REST_P_ENUM,
-    REST_P_COMMAND,
-}rest_param_type_t;
-
-typedef enum
-{
-    REST_ACC_RO,
-    REST_ACC_RW,
-    REST_ACC_WO
-}rest_access_mode_t;
-
-typedef struct
-{
-    bool exists;
-    union
-    {
-        int valInt;
-        double valDouble;
-    };
-}rest_min_max_t;
 
 class RestParamSet;
 
@@ -47,7 +19,7 @@ private:
     RestParamSet *mSet;
     std::string mAsynName;
     asynParamType mAsynType;
-    sys_t mSubSystem;
+    std::string mSubSystem;
     std::string mName;
     bool mRemote;
 
@@ -93,9 +65,10 @@ private:
 
 public:
     RestParam (RestParamSet *set, std::string const & asynName,
-            asynParamType asynType, sys_t ss = (sys_t) 0,
+            asynParamType asynType, std::string subSystem = "",
             std::string const & name = "");
 
+    void setCommand();
     void setEpsilon (double epsilon);
     int getIndex (void);
     void setEnumValues (std::vector<std::string> const & values);
@@ -106,15 +79,15 @@ public:
     int get (double & value);
     int get (std::string & value);
 
-    // Fetch the current value from the detector, update underlying asyn parameter
-    // and return the value
+    // Fetch the current value from the device
+    // Update underlying asyn parameter and return the value
     int fetch (void);
     int fetch (bool & value,        int timeout = DEFAULT_TIMEOUT);
     int fetch (int & value,         int timeout = DEFAULT_TIMEOUT);
     int fetch (double & value,      int timeout = DEFAULT_TIMEOUT);
     int fetch (std::string & value, int timeout = DEFAULT_TIMEOUT);
 
-    // Put the value both to the detector (if it is connected to a detector
+    // Put the value both to the device (if it is connected to a device
     // parameter) and to the underlying asyn parameter if successful. Update
     // other modified parameters automatically.
     int put (bool value,                int timeout = DEFAULT_TIMEOUT);
@@ -134,14 +107,16 @@ private:
     RestAPI *mApi;
     asynUser *mUser;
 
-    rest_param_map_t mDetConfigMap;
+    rest_param_map_t mConfigMap;
     rest_asyn_map_t mAsynMap;
 
 public:
     RestParamSet (asynPortDriver *portDriver, RestAPI *api, asynUser *user);
 
     RestParam *create(std::string const & asynName, asynParamType asynType,
-            sys_t ss = (sys_t)0, std::string const & name = "");
+            std::string subSystem = "", std::string const & name = "");
+
+    void addToConfigMap(std::string const & name, RestParam *p);
 
     asynPortDriver *getPortDriver (void);
     RestAPI *getApi (void);

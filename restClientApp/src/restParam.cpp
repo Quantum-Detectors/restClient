@@ -300,8 +300,8 @@ int RestParam::setParam (std::string const & value)
 
 
 RestParam::RestParam (RestParamSet *set, string const & asynName,
-        asynParamType asynType, sys_t ss, string const & name)
-: mSet(set), mAsynName(asynName), mAsynType(asynType), mSubSystem(ss),
+        asynParamType asynType, std::string subSystem, string const & name)
+: mSet(set), mAsynName(asynName), mAsynType(asynType), mSubSystem(subSystem),
   mName(name), mRemote(!mName.empty()), mAsynIndex(-1),
   mType(REST_P_UNINIT), mAccessMode(), mMin(), mMax(), mEnumValues(),
   mCriticalValues(), mEpsilon(0.0), mCustomEnum(false)
@@ -334,11 +334,12 @@ RestParam::RestParam (RestParamSet *set, string const & asynName,
             throw std::runtime_error(mAsynName);
         }
     }
-    else if(ss == SSCommand || ss == SSFWCommand || ss == SSSysCommand)
-    {
-        mType = REST_P_COMMAND;
-        mAccessMode = REST_ACC_WO;
-    }
+}
+
+void RestParam::setCommand()
+{
+    mType = REST_P_COMMAND;
+    mAccessMode = REST_ACC_WO;
 }
 
 void RestParam::setEpsilon (double epsilon)
@@ -449,23 +450,9 @@ int RestParam::baseFetch (string & rawValue, int timeout)
             return EXIT_FAILURE;
         }
 
-        switch(mSubSystem)
-        {
-        case SSCommand:
-        case SSFWCommand:
-        case SSSysCommand:
-            mAccessMode = REST_ACC_WO;
-            break;
-        case SSDetStatus:
-        case SSFWStatus:
-        case SSMonStatus:
-        case SSStreamStatus:
-            mAccessMode = REST_ACC_RO;
-            break;
-        default:
+        if(mSet->getApi()->lookupAccessMode(mSubSystem, mAccessMode))
             if(parseAccessMode(tokens, mAccessMode))
                 mAccessMode = REST_ACC_RO;
-        }
 
         if(mCustomEnum)
             mType = REST_P_ENUM;
@@ -931,18 +918,23 @@ int RestParam::put (const char * value, int timeout)
 
 RestParamSet::RestParamSet (asynPortDriver *portDriver, RestAPI *api,
         asynUser *user)
-: mPortDriver(portDriver), mApi(api), mUser(user), mDetConfigMap(), mAsynMap()
+: mPortDriver(portDriver), mApi(api), mUser(user), mConfigMap(), mAsynMap()
 {}
 
 RestParam *RestParamSet::create(string const & asynName,
-        asynParamType asynType, sys_t ss, string const & name)
+        asynParamType asynType, std::string subSystem, string const & name)
 {
-    RestParam *p = new RestParam(this, asynName, asynType, ss, name);
-    if(!name.empty() && ss == SSDetConfig)
-        mDetConfigMap.insert(std::make_pair(name, p));
+    RestParam *p = new RestParam(this, asynName, asynType, subSystem, name);
 
     mAsynMap.insert(std::make_pair(p->getIndex(), p));
     return p;
+}
+
+void RestParamSet::addToConfigMap(std::string const & name, RestParam *p)
+{
+    if(!name.empty()) {
+        mConfigMap.insert(std::make_pair(name, p));
+    }
 }
 
 asynPortDriver *RestParamSet::getPortDriver (void)
@@ -957,9 +949,9 @@ RestAPI *RestParamSet::getApi (void)
 
 RestParam *RestParamSet::getByName (string const & name)
 {
-    rest_param_map_t::iterator item(mDetConfigMap.find(name));
+    rest_param_map_t::iterator item(mConfigMap.find(name));
 
-    if(item != mDetConfigMap.end())
+    if(item != mConfigMap.end())
         return item->second;
     return NULL;
 }

@@ -10,6 +10,7 @@ LIBRARY_IOC = restClient
 LIB_SRCS += restApi.cpp
 LIB_SRCS += restParam.cpp
 
+INC += restDefinitions.h
 INC += restApi.h
 INC += restParam.h
 

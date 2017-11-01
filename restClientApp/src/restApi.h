@@ -5,40 +5,38 @@
 #include <epicsMutex.h>
 #include <osiSock.h>
 
+#include "restDefinitions.h"
+
 #define DEFAULT_TIMEOUT     20      // seconds
 
-#define MAX_CHANGED_PARAMS  32
-#define MAX_PARAM_NAME      64
-
-// Subsystems
-typedef enum
+// Structure definitions
+typedef struct socket
 {
-    SSAPIVersion,
-    SSDetConfig,
-    SSDetStatus,
-    SSFWConfig,
-    SSFWStatus,
-    SSFWCommand,
-    SSCommand,
-    SSData,
-    SSMonConfig,
-    SSMonStatus,
-    SSMonImages,
-    SSStreamConfig,
-    SSStreamStatus,
-    SSSysCommand,
+  SOCKET fd;
+  epicsMutex mutex;
+  bool closed;
+  size_t retries;
+} socket_t;
 
-    SSCount,
-} sys_t;
+typedef struct request
+{
+  char *data;
+  size_t dataLen, actualLen;
+} request_t;
 
-// Forward declarations
-typedef struct request  request_t;
-typedef struct response response_t;
-typedef struct socket   socket_t;
+typedef struct response
+{
+  char *data;
+  size_t dataLen, actualLen, headerLen;
+  bool reconnect;
+  char *content;
+  size_t contentLength;
+  int code;
+} response_t;
 
 class RestAPI
 {
-private:
+protected:
     std::string mHostname;
     int mPort;
     struct sockaddr_in mAddress;
@@ -49,35 +47,16 @@ private:
     int setNonBlock (socket_t *s, bool nonBlock);
 
     int doRequest (const request_t *request, response_t *response, int timeout = DEFAULT_TIMEOUT);
-
-    int getBlob (sys_t sys, const char *name, char **buf, size_t *bufSize, const char *accept);
+    int parseHeader (response_t *response);
 
 public:
-    static const char *sysStr [SSCount];
-
-    static int buildMasterName (const char *pattern, int seqId, char *buf, size_t bufSize);
-    static int buildDataName   (int n, const char *pattern, int seqId, char *buf, size_t bufSize);
 
     RestAPI (std::string const & hostname, int port = 80, size_t numSockets=5);
 
-    int get (sys_t sys, std::string const & param, std::string & value, int timeout = DEFAULT_TIMEOUT);
-    int put (sys_t sys, std::string const & param, std::string const & value = "", std::string * reply = NULL, int timeout = DEFAULT_TIMEOUT);
+    int get (std::string subSystem, std::string const & param, std::string & value, int timeout = DEFAULT_TIMEOUT);
+    int put (std::string sys, std::string const & param, std::string const & value = "", std::string * reply = NULL, int timeout = DEFAULT_TIMEOUT);
 
-    int initialize (void);
-    int arm        (int *sequenceId);
-    int trigger    (int timeout, double exposure = 0.0);
-    int disarm     (void);
-    int cancel     (void);
-    int abort      (void);
-    int wait       (void);
-    int statusUpdate (void);
-
-    int getFileSize (const char *filename, size_t *size);
-    int waitFile    (const char *filename, double timeout = DEFAULT_TIMEOUT);
-    int getFile     (const char *filename, char **buf, size_t *bufSize);
-    int deleteFile  (const char *filename);
-
-    int getMonitorImage  (char **buf, size_t *bufSize, size_t timeout = 500);
+    virtual int lookupAccessMode(
+          std::string subSystem, rest_access_mode_t &accessMode) = 0;
 };
-
 #endif
