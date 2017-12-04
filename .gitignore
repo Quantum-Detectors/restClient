@@ -3,3 +3,5 @@ lib
 O.*
 cmake-build-*/
 .idea/
+bin/
+dbd/
