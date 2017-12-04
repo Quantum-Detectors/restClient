@@ -17,7 +17,7 @@
 #define EOH                     EOL EOL     // End of Header
 #define EOH_LEN                 (EOL_LEN*2) // End of Header Length
 
-#define DATA_NATIVE             "application/json; charset=utf-8"
+#define DATA_NATIVE             "application/json"
 #define DATA_HTML               "text/html"
 
 #define MAX_HTTP_RETRIES        1
