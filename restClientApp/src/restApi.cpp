@@ -48,6 +48,14 @@
     "Content-Type: " DATA_NATIVE EOL \
     "Content-Length: %lu" EOH
 
+const std::string RestAPI::PARAM_VALUE           = "";
+const std::string RestAPI::PARAM_TYPE            = "";
+const std::string RestAPI::PARAM_MIN             = "";
+const std::string RestAPI::PARAM_MAX             = "";
+const std::string RestAPI::PARAM_ENUM_VALUES     = "";
+const std::string RestAPI::PARAM_ACCESS_MODE     = "";
+const std::string RestAPI::PARAM_CRITICAL_VALUES = "";
+
 using std::string;
 
 

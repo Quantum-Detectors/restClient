@@ -50,6 +50,13 @@ protected:
     int parseHeader (response_t *response);
 
 public:
+    static const std::string PARAM_VALUE;
+    static const std::string PARAM_TYPE;
+    static const std::string PARAM_MIN;
+    static const std::string PARAM_MAX;
+    static const std::string PARAM_ENUM_VALUES;
+    static const std::string PARAM_ACCESS_MODE;
+    static const std::string PARAM_CRITICAL_VALUES;
 
     RestAPI (std::string const & hostname, int port = 80, size_t numSockets=5);
 

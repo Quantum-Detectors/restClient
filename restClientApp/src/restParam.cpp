@@ -63,21 +63,22 @@ int RestParam::parseType (struct json_token *tokens, rest_param_type_t & type)
     const char *functionName = "parseType";
 
     // Find value type
-    struct json_token *token = find_json_token(tokens, "value_type");
+    std::string key = mSet->getApi()->PARAM_TYPE;
+    struct json_token *token = find_json_token(tokens, key.c_str());
     if(token == NULL)
     {
-        ERR("unable to find 'value_type' json field");
+        ERR_ARGS("unable to find '%s' json field", key.c_str());
         return EXIT_FAILURE;
     }
     string typeStr(token->ptr, token->len);
 
     // Check if this parameter is an enumeration
-    token = find_json_token(tokens, "allowed_values");
+    token = find_json_token(tokens, mSet->getApi()->PARAM_ENUM_VALUES.c_str());
     if(token)
         typeStr = "enum";
 
     // Check if this parameter is write only (command)
-    token = find_json_token(tokens, "access_mode");
+    token = find_json_token(tokens, mSet->getApi()->PARAM_ACCESS_MODE.c_str());
     if(token && token->ptr[0] == 'w')
         typeStr = "command";
 
@@ -103,7 +104,7 @@ int RestParam::parseAccessMode (struct json_token *tokens,
 {
     const char *functionName = "parseAccessMode";
 
-    struct json_token *t = find_json_token(tokens, "access_mode");
+    struct json_token *t = find_json_token(tokens, mSet->getApi()->PARAM_ACCESS_MODE.c_str());
     if(!t)
         return EXIT_FAILURE;
 
@@ -132,7 +133,7 @@ int RestParam::parseMinMax (struct json_token *tokens, string const & key,
 
     if((minMax.exists = (t != NULL)))
     {
-        struct json_token *type = find_json_token(tokens, "value_type");
+        struct json_token *type = find_json_token(tokens, mSet->getApi()->PARAM_TYPE.c_str());
         if(!type)
         {
             ERR("failed to find 'value_type'");
@@ -165,7 +166,7 @@ int RestParam::parseValue (struct json_token *tokens, string & rawValue)
 {
     const char *functionName = "parseValue";
 
-    struct json_token *token = find_json_token(tokens, "value");
+    struct json_token *token = find_json_token(tokens, mSet->getApi()->PARAM_VALUE.c_str());
     if(token == NULL)
     {
         ERR("unable to find 'value' json field");
@@ -457,20 +458,20 @@ int RestParam::baseFetch (string & rawValue, int timeout)
         if(mCustomEnum)
             mType = REST_P_ENUM;
         else
-            mEnumValues = parseArray(tokens, "allowed_values");
-        mCriticalValues = parseArray(tokens, "critical_values");
+            mEnumValues = parseArray(tokens, mSet->getApi()->PARAM_ENUM_VALUES.c_str());
+        mCriticalValues = parseArray(tokens, mSet->getApi()->PARAM_CRITICAL_VALUES.c_str());
     }
 
     if(mType == REST_P_INT || mType == REST_P_UINT || mType == REST_P_DOUBLE)
     {
-        if(parseMinMax(tokens, "min", mMin))
+        if(parseMinMax(tokens, mSet->getApi()->PARAM_MIN.c_str(), mMin))
         {
             const char *msg = "unable to parse min limit";
             ERR_ARGS("[param=%s] %s\n[%s]", mName.c_str(), msg, buffer.c_str());
             return EXIT_FAILURE;
         }
 
-        if(parseMinMax(tokens, "max", mMax))
+        if(parseMinMax(tokens, mSet->getApi()->PARAM_MAX.c_str(), mMax))
         {
             const char *msg = "unable to parse max limit";
             ERR_ARGS("[param=%s] %s\n[%s]", mName.c_str(), msg, buffer.c_str());
