@@ -166,10 +166,17 @@ int RestParam::parseValue (struct json_token *tokens, string & rawValue)
 {
     const char *functionName = "parseValue";
 
-    struct json_token *token = find_json_token(tokens, mSet->getApi()->PARAM_VALUE.c_str());
+    std::string key;
+    if (!mSet->getApi()->PARAM_VALUE.empty()) {
+        key = mSet->getApi()->PARAM_VALUE;
+    }
+    else {
+        key = mName;
+    }
+    struct json_token *token = find_json_token(tokens, key.c_str());
     if(token == NULL)
     {
-        ERR("unable to find 'value' json field");
+        ERR_ARGS("unable to find '%s' json field", key.c_str());
         return EXIT_FAILURE;
     }
     rawValue = string(token->ptr, token->len);
