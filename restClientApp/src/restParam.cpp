@@ -301,10 +301,11 @@ int RestParam::setParam (std::string const & value)
 
 
 RestParam::RestParam (RestParamSet *set, string const & asynName,
-        asynParamType asynType, std::string subSystem, string const & name)
+                      asynParamType asynType, std::string subSystem, string const & name,
+                      rest_param_type_t restType)
 : mSet(set), mAsynName(asynName), mAsynType(asynType), mSubSystem(subSystem),
   mName(name), mRemote(!mName.empty()), mAsynIndex(-1),
-  mType(REST_P_UNINIT), mAccessMode(), mMin(), mMax(), mEnumValues(),
+  mType(restType), mAccessMode(), mMin(), mMax(), mEnumValues(),
   mCriticalValues(), mEpsilon(0.0), mCustomEnum(false)
 {
     const char *functionName = "RestParam";
@@ -922,10 +923,11 @@ RestParamSet::RestParamSet (asynPortDriver *portDriver, RestAPI *api,
 : mPortDriver(portDriver), mApi(api), mUser(user), mConfigMap(), mAsynMap()
 {}
 
-RestParam *RestParamSet::create(string const & asynName,
-        asynParamType asynType, std::string subSystem, string const & name)
+RestParam *RestParamSet::create(std::string const & asynName, asynParamType asynType,
+                                std::string subSystem, std::string const & name,
+                                rest_param_type_t restType)
 {
-    RestParam *p = new RestParam(this, asynName, asynType, subSystem, name);
+    RestParam *p = new RestParam(this, asynName, asynType, subSystem, name, restType);
 
     mAsynMap.insert(std::make_pair(p->getIndex(), p));
     return p;

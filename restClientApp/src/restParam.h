@@ -64,9 +64,9 @@ private:
     int basePut (std::string const & rawValue, int timeout = DEFAULT_TIMEOUT);
 
 public:
-    RestParam (RestParamSet *set, std::string const & asynName,
-            asynParamType asynType, std::string subSystem = "",
-            std::string const & name = "");
+    RestParam(RestParamSet *set, std::string const & asynName,
+              asynParamType asynType, std::string subSystem = "",
+              std::string const & name = "", rest_param_type_t restType = REST_P_UNINIT);
 
     void setCommand();
     void setEpsilon (double epsilon);
@@ -113,8 +113,9 @@ private:
 public:
     RestParamSet (asynPortDriver *portDriver, RestAPI *api, asynUser *user);
 
-    RestParam *create(std::string const & asynName, asynParamType asynType,
-            std::string subSystem = "", std::string const & name = "");
+    RestParam *create(std::string const & asynName,
+                      asynParamType asynType, std::string subSystem = "",
+                      std::string const & name = "", rest_param_type_t restType = REST_P_UNINIT);
 
     void addToConfigMap(std::string const & name, RestParam *p);
 
