@@ -315,8 +315,7 @@ int RestAPI::put (std::string subSystem, string const & param,
     int valueLen = 0;
     char valueBuf[MAX_BUF_SIZE] = "";
     if(!value.empty())
-        valueLen = epicsSnprintf(valueBuf, sizeof(valueBuf), "{\"value\": %s}",
-                value.c_str());
+        valueLen = epicsSnprintf(valueBuf, sizeof(valueBuf), value.c_str());
 
     return basePut(subSystem, param, valueBuf, valueLen, reply, timeout);
 }

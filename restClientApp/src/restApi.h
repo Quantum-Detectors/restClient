@@ -61,11 +61,11 @@ public:
     RestAPI (std::string const & hostname, int port = 80, size_t numSockets=5);
 
     int get (std::string subSystem, std::string const & param, std::string & value, int timeout = DEFAULT_TIMEOUT);
-    // Put with just value -> {"value": value}
+    // Put with just value -> Payload: <value>
     int put(std::string sys, const std::string & param,
             const std::string & value = "",
             std::string * reply = NULL, int timeout = DEFAULT_TIMEOUT);
-    // Put with key and value -> {key: value}
+    // Put with key and value -> Payload: {<key>: <value>}
     int put(std::string sys, const std::string & param,
             const std::string & key, const std::string & value,
             std::string * reply = NULL, int timeout = DEFAULT_TIMEOUT);
