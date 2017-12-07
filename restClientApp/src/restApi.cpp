@@ -318,42 +318,22 @@ int RestAPI::put (std::string subSystem, string const & param,
         valueLen = epicsSnprintf(valueBuf, sizeof(valueBuf), "{\"value\": %s}",
                 value.c_str());
 
-    int headerLen;
-    char header[MAX_BUF_SIZE];
-    headerLen = epicsSnprintf(header, sizeof(header), REQUEST_PUT,
-            subSystem.c_str(), param.c_str(), mHostname.c_str(),
-            (size_t)valueLen);
+    return basePut(subSystem, param, valueBuf, valueLen, reply, timeout);
+}
 
-    request_t request = {};
-    char requestBuf[headerLen + valueLen];
-    request.data      = requestBuf;
-    request.dataLen   = headerLen + valueLen;
-    request.actualLen = request.dataLen;
+int RestAPI::put(std::string subSystem, const std::string & param,
+                 const std::string & key, const std::string & value,
+                 std::string * reply, int timeout)
+{
+  const char *functionName = "put<key, value>";
 
-    response_t response = {};
-    char responseBuf[MAX_MESSAGE_SIZE];
-    response.data    = responseBuf;
-    response.dataLen = sizeof(responseBuf);
+  int valueLen = 0;
+  char valueBuf[MAX_BUF_SIZE] = "";
 
-    memcpy(request.data, header, headerLen);
-    memcpy(request.data + headerLen, valueBuf, valueLen);
+  valueLen = epicsSnprintf(valueBuf, sizeof(valueBuf),
+                           "{\"%s\": %s}", key.c_str(), value.c_str());
 
-    if(doRequest(&request, &response, timeout))
-    {
-        ERR_ARGS("[param=%s] request failed", param.c_str());
-        return EXIT_FAILURE;
-    }
-
-    if(response.code != 200)
-    {
-        ERR_ARGS("[param=%s] server returned error code %d",
-                param.c_str(), response.code);
-        return EXIT_FAILURE;
-    }
-
-    if(reply)
-        *reply = string(response.content, response.contentLength);
-    return EXIT_SUCCESS;
+  return basePut(subSystem, param, valueBuf, valueLen, reply, timeout);
 }
 
 int RestAPI::get (std::string subSystem, string const & param, string & value, int timeout)
@@ -387,4 +367,46 @@ int RestAPI::get (std::string subSystem, string const & param, string & value, i
 
     value = string(response.content, response.contentLength);
     return EXIT_SUCCESS;
+}
+
+int RestAPI::basePut(std::string subSystem, const std::string & param,
+                     char * valueBuf, int valueLen, string * reply, int timeout)
+{
+  const char *functionName = "basePut";
+  int headerLen;
+  char header[MAX_BUF_SIZE];
+  headerLen = epicsSnprintf(header, sizeof(header), REQUEST_PUT,
+                            subSystem.c_str(), param.c_str(), mHostname.c_str(),
+                            (size_t)valueLen);
+
+  request_t request = {};
+  char requestBuf[headerLen + valueLen];
+  request.data      = requestBuf;
+  request.dataLen   = headerLen + valueLen;
+  request.actualLen = request.dataLen;
+
+  response_t response = {};
+  char responseBuf[MAX_MESSAGE_SIZE];
+  response.data    = responseBuf;
+  response.dataLen = sizeof(responseBuf);
+
+  memcpy(request.data, header, headerLen);
+  memcpy(request.data + headerLen, valueBuf, valueLen);
+
+  if(doRequest(&request, &response, timeout))
+  {
+    ERR_ARGS("[param=%s] request failed", param.c_str());
+    return EXIT_FAILURE;
+  }
+
+  if(response.code != 200)
+  {
+    ERR_ARGS("[param=%s] server returned error code %d",
+             param.c_str(), response.code);
+    return EXIT_FAILURE;
+  }
+
+  if(reply)
+    *reply = string(response.content, response.contentLength);
+  return EXIT_SUCCESS;
 }

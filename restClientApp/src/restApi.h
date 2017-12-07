@@ -61,9 +61,21 @@ public:
     RestAPI (std::string const & hostname, int port = 80, size_t numSockets=5);
 
     int get (std::string subSystem, std::string const & param, std::string & value, int timeout = DEFAULT_TIMEOUT);
-    int put (std::string sys, std::string const & param, std::string const & value = "", std::string * reply = NULL, int timeout = DEFAULT_TIMEOUT);
+    // Put with just value -> {"value": value}
+    int put(std::string sys, const std::string & param,
+            const std::string & value = "",
+            std::string * reply = NULL, int timeout = DEFAULT_TIMEOUT);
+    // Put with key and value -> {key: value}
+    int put(std::string sys, const std::string & param,
+            const std::string & key, const std::string & value,
+            std::string * reply = NULL, int timeout = DEFAULT_TIMEOUT);
 
     virtual int lookupAccessMode(
           std::string subSystem, rest_access_mode_t &accessMode) = 0;
+
+ private:
+  int basePut(std::string subSystem, std::string const & param,
+              char * valueBuf, int valueLen,
+              std::string * reply = NULL, int timeout = DEFAULT_TIMEOUT);
 };
 #endif
