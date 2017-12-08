@@ -306,29 +306,15 @@ int RestParam::setParam (std::string const & value)
     return (int) mSet->getPortDriver()->setStringParam(mAsynIndex, value);
 }
 
-
-RestParam::RestParam (RestParamSet *set, string const & asynName,
-                      asynParamType asynType, std::string subSystem, string const & name,
-                      rest_param_type_t restType)
-: mSet(set), mAsynName(asynName), mAsynType(asynType), mSubSystem(subSystem),
-  mName(name), mRemote(!mName.empty()), mAsynIndex(-1),
-  mType(restType), mAccessMode(), mMin(), mMax(), mEnumValues(),
-  mCriticalValues(), mEpsilon(0.0), mCustomEnum(false)
+RestParam::RestParam(RestParamSet *set, std::string const & asynName, asynParamType asynType,
+                     std::string subSystem, std::string const & name)
+    : mSet(set),
+      mAsynName(asynName), mAsynType(asynType), mAsynIndex(-1),
+      mSubSystem(subSystem), mName(name), mRemote(!mName.empty()),
+      mAccessMode(), mMin(), mMax(), mEnumValues(), mCriticalValues(), mEpsilon(0.0),
+      mCustomEnum(false)
 {
-    const char *functionName = "RestParam";
-
-    asynStatus status;
-
-    // Check if asyn parameter already exists, create if it doesn't
-    if(mSet->getPortDriver()->findParam(mAsynName.c_str(), &mAsynIndex))
-    {
-        status = mSet->getPortDriver()->createParam(mAsynName.c_str(), mAsynType, &mAsynIndex);
-        if(status)
-        {
-            ERR_ARGS("[param=%s] failed to create param", mAsynName.c_str());
-            throw std::runtime_error(mAsynName);
-        }
-    }
+    const char *functionName = "RestParam<asynType>";
 
     if(mName.empty())
     {
@@ -338,11 +324,65 @@ RestParam::RestParam (RestParamSet *set, string const & asynName,
         case asynParamFloat64: mType = REST_P_DOUBLE; break;
         case asynParamOctet:   mType = REST_P_STRING; break;
         default:
-            ERR_ARGS("[param=%s] invalid asyn type %d", mAsynName.c_str(),
-                    (int)asynType);
+            ERR_ARGS("[param=%s] invalid asyn type %d", mAsynName.c_str(), (int)asynType);
             throw std::runtime_error(mAsynName);
         }
     }
+
+  bindAsynParam();
+}
+
+RestParam::RestParam(RestParamSet *set, std::string const & asynName, rest_param_type_t restType,
+                     std::string subSystem, std::string const & name)
+    : mSet(set),
+      mAsynName(asynName), mAsynType(asynParamNotDefined), mAsynIndex(-1),
+      mSubSystem(subSystem), mName(name), mRemote(!mName.empty()), mType(restType),
+      mAccessMode(), mMin(), mMax(), mEnumValues(), mCriticalValues(), mEpsilon(0.0),
+      mCustomEnum(false)
+{
+    const char *functionName = "RestParam<restType>";
+
+    switch(restType)
+    {
+        case REST_P_INT:
+        case REST_P_UINT:
+        case REST_P_BOOL:
+        case REST_P_ENUM:
+        case REST_P_COMMAND:
+            mAsynType = asynParamInt32;
+            break;
+        case REST_P_DOUBLE:
+            mAsynType = asynParamFloat64;
+            break;
+        case REST_P_STRING:
+            mAsynType = asynParamOctet;
+            break;
+        default:  // Includes REST_P_UNINIT
+            ERR_ARGS("[param=%s] invalid REST type %d", mAsynName.c_str(), (int)restType);
+            throw std::runtime_error(mAsynName);
+    }
+
+    bindAsynParam();
+}
+
+asynStatus RestParam::bindAsynParam()
+{
+    const char *functionName = "bindAsynParam";
+    asynStatus status;
+    // Check if asyn parameter already exists, create if it doesn't
+    if(mSet->getPortDriver()->findParam(mAsynName.c_str(), &mAsynIndex)) {
+        status = mSet->getPortDriver()->createParam(mAsynName.c_str(), mAsynType, &mAsynIndex);
+        if(status) {
+            ERR_ARGS("[param=%s] failed to create param", mAsynName.c_str());
+        }
+        else {
+            return status;
+        }
+    }
+    else {
+        ERR_ARGS("[param=%s] already exists", mAsynName.c_str());
+    }
+    throw std::runtime_error(mAsynName);
 }
 
 void RestParam::setCommand()
@@ -931,13 +971,21 @@ RestParamSet::RestParamSet (asynPortDriver *portDriver, RestAPI *api,
 {}
 
 RestParam *RestParamSet::create(std::string const & asynName, asynParamType asynType,
-                                std::string subSystem, std::string const & name,
-                                rest_param_type_t restType)
+                                std::string subSystem, std::string const & name)
 {
-    RestParam *p = new RestParam(this, asynName, asynType, subSystem, name, restType);
+    RestParam *p = new RestParam(this, asynName, asynType, subSystem, name);
 
     mAsynMap.insert(std::make_pair(p->getIndex(), p));
     return p;
+}
+
+RestParam *RestParamSet::create(std::string const & asynName, rest_param_type_t restType,
+                                std::string subSystem, std::string const & name)
+{
+  RestParam *p = new RestParam(this, asynName, restType, subSystem, name);
+
+  mAsynMap.insert(std::make_pair(p->getIndex(), p));
+  return p;
 }
 
 void RestParamSet::addToConfigMap(std::string const & name, RestParam *p)

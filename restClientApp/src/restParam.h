@@ -19,17 +19,19 @@ private:
     RestParamSet *mSet;
     std::string mAsynName;
     asynParamType mAsynType;
+    int mAsynIndex;
     std::string mSubSystem;
     std::string mName;
     bool mRemote;
 
-    int mAsynIndex;
     rest_param_type_t mType;
     rest_access_mode_t mAccessMode;
     rest_min_max_t mMin, mMax;
     std::vector <std::string> mEnumValues, mCriticalValues;
     double mEpsilon;
     bool mCustomEnum;
+
+    asynStatus bindAsynParam();
 
     std::vector<std::string> parseArray (struct json_token *tokens,
             std::string const & name = "");
@@ -64,9 +66,12 @@ private:
     int basePut (std::string const & rawValue, int timeout = DEFAULT_TIMEOUT);
 
 public:
-    RestParam(RestParamSet *set, std::string const & asynName,
-              asynParamType asynType, std::string subSystem = "",
-              std::string const & name = "", rest_param_type_t restType = REST_P_UNINIT);
+    // Asyn type constructor
+    RestParam(RestParamSet *set, std::string const & asynName, asynParamType asynType,
+              std::string subSystem = "", std::string const & name = "");
+    // REST type constructor
+    RestParam(RestParamSet *set, std::string const & asynName, rest_param_type_t restType,
+              std::string subSystem = "", std::string const & name = "");
 
     void setCommand();
     void setEpsilon (double epsilon);
@@ -113,9 +118,12 @@ private:
 public:
     RestParamSet (asynPortDriver *portDriver, RestAPI *api, asynUser *user);
 
-    RestParam *create(std::string const & asynName,
-                      asynParamType asynType, std::string subSystem = "",
-                      std::string const & name = "", rest_param_type_t restType = REST_P_UNINIT);
+    // Asyn type create
+    RestParam * create(std::string const & asynName, asynParamType asynType,
+                       std::string subSystem = "", std::string const & name = "");
+    // REST type create
+    RestParam * create(std::string const & asynName, rest_param_type_t restType,
+                       std::string subSystem = "", std::string const & name = "");
 
     void addToConfigMap(std::string const & name, RestParam *p);
 
