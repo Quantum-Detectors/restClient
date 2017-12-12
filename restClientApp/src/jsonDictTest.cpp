@@ -1,27 +1,27 @@
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE "DictItemUnitTests"
+#define BOOST_TEST_MODULE "JsonDictUnitTests"
 #define BOOST_TEST_MAIN
 #include <boost/test/unit_test.hpp>
 
-#include "dictItem.h"
+#include "jsonDict.h"
 
 #include <string>
 #include <vector>
 
-BOOST_AUTO_TEST_SUITE(DictItemUnitTests);
+BOOST_AUTO_TEST_SUITE(JsonDictUnitTests);
 
 BOOST_AUTO_TEST_CASE(StringTest)
 {
-  DictItem testDict = DictItem("key", "value");
+  JsonDict testDict = JsonDict("key", "value");
 
   BOOST_CHECK_EQUAL(testDict.str(), "{\"key\": \"value\"}");
 };
 
 BOOST_AUTO_TEST_CASE(DictTest)
 {
-  DictItem subDict = DictItem("subKey", "value");
+  JsonDict subDict = JsonDict("subKey", "value");
   BOOST_TEST_MESSAGE(subDict.str().c_str());
-  DictItem testDict = DictItem("key", subDict);
+  JsonDict testDict = JsonDict("key", subDict);
 
   BOOST_CHECK_EQUAL(testDict.str(), "{\"key\": "
                                         "{\"subKey\": \"value\"}"
@@ -30,11 +30,11 @@ BOOST_AUTO_TEST_CASE(DictTest)
 
 BOOST_AUTO_TEST_CASE(DictVectorTest)
 {
-  std::vector<DictItem> dictVector;
-  dictVector.push_back(DictItem("key1", "value1"));
-  dictVector.push_back(DictItem("key2", "value2"));
-  dictVector.push_back(DictItem("key3", "value3"));
-  DictItem testDict = DictItem(dictVector);
+  std::vector<JsonDict> dictVector;
+  dictVector.push_back(JsonDict("key1", "value1"));
+  dictVector.push_back(JsonDict("key2", "value2"));
+  dictVector.push_back(JsonDict("key3", "value3"));
+  JsonDict testDict = JsonDict(dictVector);
 
   BOOST_CHECK_EQUAL(testDict.str(), "{"
                                         "\"key1\": \"value1\", "
@@ -45,13 +45,13 @@ BOOST_AUTO_TEST_CASE(DictVectorTest)
 
 BOOST_AUTO_TEST_CASE(DictKeyVectorTest)
 {
-  std::vector<DictItem> dictVector;
-  dictVector.push_back(DictItem("subKey1", "value1"));
-  dictVector.push_back(DictItem("subKey2", "value2"));
-  dictVector.push_back(DictItem("subKey3", "value3"));
-  DictItem vectorDict = DictItem(dictVector);
+  std::vector<JsonDict> dictVector;
+  dictVector.push_back(JsonDict("subKey1", "value1"));
+  dictVector.push_back(JsonDict("subKey2", "value2"));
+  dictVector.push_back(JsonDict("subKey3", "value3"));
+  JsonDict vectorDict = JsonDict(dictVector);
   BOOST_TEST_MESSAGE(vectorDict.str().c_str());
-  DictItem testDict = DictItem("key", vectorDict);
+  JsonDict testDict = JsonDict("key", vectorDict);
 
   BOOST_CHECK_EQUAL(testDict.str(), "{\"key\": "
                                         "{\"subKey1\": \"value1\", "

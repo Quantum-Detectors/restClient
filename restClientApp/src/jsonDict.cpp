@@ -1,18 +1,18 @@
-#include "dictItem.h"
+#include "jsonDict.h"
 
 #include <sstream>
 
-DictItem::DictItem(const std::string& key, const std::string& value)
+JsonDict::JsonDict(const std::string& key, const std::string& value)
     : mKey(rawQuote(key)), mValue(rawQuote(value)) {}
 
-DictItem::DictItem(const std::string& key, DictItem& dictValue)
+JsonDict::JsonDict(const std::string& key, JsonDict& dictValue)
     : mKey(rawQuote(key)), mValue(dictValue.str()) {}
 
-DictItem::DictItem(std::vector<DictItem>& values)
+JsonDict::JsonDict(std::vector<JsonDict>& values)
     : mKey(), mValue()
 {
   std::stringstream dict;
-  std::vector<DictItem>::iterator it;
+  std::vector<JsonDict>::iterator it;
   for (it = values.begin(); it != values.end(); it++) {
     dict << it->mKey << ": " << it->mValue;
     if (it < values.end() - 1) {
@@ -23,7 +23,7 @@ DictItem::DictItem(std::vector<DictItem>& values)
   mValue = dict.str();
 }
 
-std::string DictItem::str()
+std::string JsonDict::str()
 {
   std::stringstream dict;
   if (mKey.empty()) {
@@ -36,7 +36,7 @@ std::string DictItem::str()
   return dict.str();
 }
 
-std::string DictItem::rawQuote(const std::string& value)
+std::string JsonDict::rawQuote(const std::string& value)
 {
   std::stringstream quotedValue;
   quotedValue << "\"" << value << "\"";
