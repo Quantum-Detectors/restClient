@@ -15,7 +15,7 @@ class JsonDict
   JsonDict(const std::string& key, JsonDict& value);
   // Multiple key-value pairs
   // {"key1": "value1", "key2": "value2", "key3": "value3"}
-  JsonDict(std::vector<JsonDict>& values);
+  explicit JsonDict(std::vector<JsonDict>& values);
 
   std::string str();
 
