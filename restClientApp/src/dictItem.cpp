@@ -5,22 +5,20 @@
 DictItem::DictItem(const std::string& key, const std::string& value)
     : mKey(rawQuote(key)), mValue(rawQuote(value)) {}
 
-DictItem::DictItem(const std::string& key, DictItem dictValue)
+DictItem::DictItem(const std::string& key, DictItem& dictValue)
     : mKey(rawQuote(key)), mValue(dictValue.str()) {}
 
-DictItem::DictItem(const std::string& key, std::vector<DictItem>& values)
-    : mKey(rawQuote(key)), mValue()
+DictItem::DictItem(std::vector<DictItem>& values)
+    : mKey(), mValue()
 {
   std::stringstream dict;
   std::vector<DictItem>::iterator it;
-  dict << "{";
   for (it = values.begin(); it != values.end(); it++) {
     dict << it->mKey << ": " << it->mValue;
     if (it < values.end() - 1) {
       dict << ", ";
     }
   }
-  dict << "}";
 
   mValue = dict.str();
 }
@@ -28,7 +26,12 @@ DictItem::DictItem(const std::string& key, std::vector<DictItem>& values)
 std::string DictItem::str()
 {
   std::stringstream dict;
-  dict << "{" << mKey << ": " << mValue << "}";
+  if (mKey.empty()) {
+    dict << "{" << mValue << "}";
+  }
+  else {
+    dict << "{" << mKey << ": " << mValue << "}";
+  }
 
   return dict.str();
 }

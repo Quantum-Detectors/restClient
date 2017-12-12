@@ -12,10 +12,10 @@ class DictItem
   DictItem(const std::string& key, const std::string& value);
   // A single key with an arbitrary dictionary for the value
   // {"key": {"subKey": "value"}}
-  DictItem(const std::string& key, DictItem value);
-  // A single key with a dictionary with multiple key-value pairs as the value
-  // {"key": {"subKey1": "value1", "subKey2": "value2", "subKey3": "value3"}}
-  DictItem(const std::string& key, std::vector<DictItem>& values);
+  DictItem(const std::string& key, DictItem& value);
+  // Multiple key-value pairs
+  // {"key1": "value1", "key2": "value2", "key3": "value3"}
+  DictItem(std::vector<DictItem>& values);
 
   std::string str();
 

@@ -31,15 +31,32 @@ BOOST_AUTO_TEST_CASE(DictTest)
 BOOST_AUTO_TEST_CASE(DictVectorTest)
 {
   std::vector<DictItem> dictVector;
+  dictVector.push_back(DictItem("key1", "value1"));
+  dictVector.push_back(DictItem("key2", "value2"));
+  dictVector.push_back(DictItem("key3", "value3"));
+  DictItem testDict = DictItem(dictVector);
+
+  BOOST_CHECK_EQUAL(testDict.str(), "{"
+                                        "\"key1\": \"value1\", "
+                                        "\"key2\": \"value2\", "
+                                        "\"key3\": \"value3\""
+                                    "}");
+};
+
+BOOST_AUTO_TEST_CASE(DictKeyVectorTest)
+{
+  std::vector<DictItem> dictVector;
   dictVector.push_back(DictItem("subKey1", "value1"));
   dictVector.push_back(DictItem("subKey2", "value2"));
   dictVector.push_back(DictItem("subKey3", "value3"));
-  DictItem testDict = DictItem("key", dictVector);
+  DictItem vectorDict = DictItem(dictVector);
+  BOOST_TEST_MESSAGE(vectorDict.str().c_str());
+  DictItem testDict = DictItem("key", vectorDict);
 
   BOOST_CHECK_EQUAL(testDict.str(), "{\"key\": "
-                                        "{\"subKey1\": \"value1\","
-                                        " \"subKey2\": \"value2\","
-                                        " \"subKey3\": \"value3\""
+                                        "{\"subKey1\": \"value1\", "
+                                        "\"subKey2\": \"value2\", "
+                                        "\"subKey3\": \"value3\""
                                         "}"
                                     "}");
 };
