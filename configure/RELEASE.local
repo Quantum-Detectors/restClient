@@ -4,3 +4,5 @@ SUPPORT = /dls_sw/prod/R3.14.12.3/support
 #WORK    = /dls_sw/work/R3.14.12.3/support
 
 ASYN = $(SUPPORT)/asyn/4-31
+
+BOOST = /dls_sw/prod/tools/RHEL6-x86_64/boost/1-48-0/prefix
