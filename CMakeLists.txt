@@ -40,3 +40,8 @@ add_library(restClient_source ${RESTCLIENT_SOURCE_FILES})
 add_custom_target(restClient_build
     COMMAND $(MAKE) -C /scratch/work/R3.14.12.3/support/restClient
     SOURCES ${RESTCLIENT_SOURCE_FILES})
+
+add_executable(restClientTest restClientApp/src/jsonDictTest.cpp)
+target_link_libraries(restClientTest
+        restClient_source
+        boost_unit_test_framework)
