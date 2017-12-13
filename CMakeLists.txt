@@ -13,7 +13,8 @@ include_directories(
     ${BOOST}/include
     ${SUPPORT}/include
     ${EPICS_BASE}/include
-    ${EPICS_BASE}/include/os/Linux)
+    ${EPICS_BASE}/include/os/Linux
+    restClientApp/frozenSrc)
 
 set(RESTCLIENT_SOURCE_FILES
     restClientApp/frozenSrc/frozen.c
