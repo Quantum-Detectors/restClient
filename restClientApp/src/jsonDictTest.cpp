@@ -135,4 +135,47 @@ BOOST_AUTO_TEST_CASE(DictKeyVectorTest)
                                     "}");
 };
 
+BOOST_AUTO_TEST_CASE(ComplicatedTest)
+{
+  JsonDict pi = JsonDict("pi", 3.14);
+  JsonDict happy = JsonDict("happy", true);
+  JsonDict name = JsonDict("name", "Niels");
+  JsonDict everything = JsonDict("everything", 42);
+  JsonDict answer = JsonDict("answer", everything);
+  std::vector<int> listVector;
+  listVector.push_back(1);
+  listVector.push_back(0);
+  listVector.push_back(2);
+  JsonDict list = JsonDict("list", listVector);
+  std::vector<JsonDict> objectVector;
+  objectVector.push_back(JsonDict("currency", "GBP"));
+  objectVector.push_back(JsonDict("value", 42.99));
+  JsonDict objectDict = JsonDict(objectVector);
+  JsonDict object = JsonDict("object", objectDict);
+
+  std::vector<JsonDict> testVector;
+  testVector.push_back(pi);
+  testVector.push_back(happy);
+  testVector.push_back(name);
+  testVector.push_back(answer);
+  testVector.push_back(list);
+  testVector.push_back(object);
+  JsonDict testDict(testVector);
+
+  BOOST_TEST_MESSAGE(testDict.str());
+  BOOST_CHECK_EQUAL(testDict.str(), "{"
+    "\"pi\": 3.14, "
+    "\"happy\": true, "
+    "\"name\": \"Niels\", "
+    "\"answer\": {"
+      "\"everything\": 42"
+    "}, "
+    "\"list\": [1, 0, 2], "
+    "\"object\": {"
+      "\"currency\": \"GBP\", "
+      "\"value\": 42.99"
+    "}"
+  "}");
+}
+
 BOOST_AUTO_TEST_SUITE_END();

@@ -2,6 +2,7 @@
 #define RESTCLIENT_JSONDICT_H
 
 #include <string>
+#include <sstream>
 #include <vector>
 
 class JsonDict
@@ -13,6 +14,23 @@ class JsonDict
   JsonDict(const std::string& key, bool value);
   JsonDict(const std::string& key, int value);
   JsonDict(const std::string& key, double value);
+  template <typename T> JsonDict(const std::string& key, std::vector<T> values)
+      : mKey(toJson(key)), mValue()
+  {
+    std::stringstream list;
+    typename std::vector<T>::iterator it;
+
+    list << "[";
+    for (it = values.begin(); it != values.end(); it++) {
+      list << toJson(*it);
+      if (it < values.end() - 1) {
+        list << ", ";
+      }
+    }
+    list << "]";
+
+    mValue = list.str();
+  }
   // A single key with an arbitrary dictionary for the value
   // {"key": {"subKey": "value"}}
   JsonDict(const std::string& key, JsonDict& value);
