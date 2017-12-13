@@ -2,33 +2,24 @@
 
 #include <sstream>
 
+// Simple key-value pairs
 JsonDict::JsonDict(const std::string& key, const char * value)
-    : mKey(rawQuote(key)), mValue(rawQuote(value)) {}
+    : mKey(toJson(key)), mValue(toJson(std::string(value))) {}
 
 JsonDict::JsonDict(const std::string& key, bool value)
-    : mKey(rawQuote(key)), mValue(value ? "true" : "false") {}
+    : mKey(toJson(key)), mValue(toJson(value)) {}
 
 JsonDict::JsonDict(const std::string& key, int value)
-    : mKey(rawQuote(key)), mValue()
-{
-  std::stringstream v;
-  v << value;
-
-  mValue = v.str();
-}
+    : mKey(toJson(key)), mValue(toJson(value)) {}
 
 JsonDict::JsonDict(const std::string& key, double value)
-    : mKey(rawQuote(key)), mValue()
-{
-  std::stringstream v;
-  v << value;
+    : mKey(toJson(key)), mValue(toJson(value)) {}
 
-  mValue = v.str();
-}
-
+// Nest dictionary
 JsonDict::JsonDict(const std::string& key, JsonDict& dictValue)
-    : mKey(rawQuote(key)), mValue(dictValue.str()) {}
+    : mKey(toJson(key)), mValue(dictValue.str()) {}
 
+// Multiple key-value pairs
 JsonDict::JsonDict(std::vector<JsonDict>& values)
     : mKey(), mValue()
 {
@@ -57,10 +48,28 @@ std::string JsonDict::str()
   return dict.str();
 }
 
-std::string JsonDict::rawQuote(const std::string& value)
+std::string JsonDict::toJson(const std::string& value)
 {
-  std::stringstream quotedValue;
-  quotedValue << "\"" << value << "\"";
+  std::stringstream v;
+  v << "\"" << value << "\"";
+  return v.str();
+}
 
-  return quotedValue.str();
+std::string JsonDict::toJson(bool value)
+{
+  return value ? "true" : "false";
+}
+
+std::string JsonDict::toJson(int value)
+{
+  std::stringstream v;
+  v << value;
+  return v.str();
+}
+
+std::string JsonDict::toJson(double value)
+{
+  std::stringstream v;
+  v << value;
+  return v.str();
 }

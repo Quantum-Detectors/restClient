@@ -26,8 +26,10 @@ class JsonDict
   std::string mKey;
   std::string mValue;
 
-  std::string rawQuote(const std::string& value);
-
+  std::string toJson(const std::string& value);
+  std::string toJson(bool value);
+  std::string toJson(int value);
+  std::string toJson(double value);
 };
 
 #endif //RESTCLIENT_JSONDICT_H
