@@ -2,8 +2,29 @@
 
 #include <sstream>
 
-JsonDict::JsonDict(const std::string& key, const std::string& value)
+JsonDict::JsonDict(const std::string& key, const char * value)
     : mKey(rawQuote(key)), mValue(rawQuote(value)) {}
+
+JsonDict::JsonDict(const std::string& key, bool value)
+    : mKey(rawQuote(key)), mValue(value ? "true" : "false") {}
+
+JsonDict::JsonDict(const std::string& key, int value)
+    : mKey(rawQuote(key)), mValue()
+{
+  std::stringstream v;
+  v << value;
+
+  mValue = v.str();
+}
+
+JsonDict::JsonDict(const std::string& key, double value)
+    : mKey(rawQuote(key)), mValue()
+{
+  std::stringstream v;
+  v << value;
+
+  mValue = v.str();
+}
 
 JsonDict::JsonDict(const std::string& key, JsonDict& dictValue)
     : mKey(rawQuote(key)), mValue(dictValue.str()) {}

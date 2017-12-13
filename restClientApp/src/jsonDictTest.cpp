@@ -5,8 +5,6 @@
 
 #include "jsonDict.h"
 
-#include <string>
-#include <vector>
 
 BOOST_AUTO_TEST_SUITE(JsonDictUnitTests);
 
@@ -15,6 +13,27 @@ BOOST_AUTO_TEST_CASE(StringTest)
   JsonDict testDict = JsonDict("key", "value");
 
   BOOST_CHECK_EQUAL(testDict.str(), "{\"key\": \"value\"}");
+};
+
+BOOST_AUTO_TEST_CASE(BoolTest)
+{
+  JsonDict testDict = JsonDict("key", false);
+
+  BOOST_CHECK_EQUAL(testDict.str(), "{\"key\": false}");
+};
+
+BOOST_AUTO_TEST_CASE(IntTest)
+{
+  JsonDict testDict = JsonDict("key", 10);
+
+  BOOST_CHECK_EQUAL(testDict.str(), "{\"key\": 10}");
+};
+
+BOOST_AUTO_TEST_CASE(DoubleTest)
+{
+  JsonDict testDict = JsonDict("key", 2.5);
+
+  BOOST_CHECK_EQUAL(testDict.str(), "{\"key\": 2.5}");
 };
 
 BOOST_AUTO_TEST_CASE(DictTest)
