@@ -1,6 +1,6 @@
 #include "jsonDict.h"
 
-#include <sstream>
+#include <stdexcept>
 
 // Simple key-value pairs
 JsonDict::JsonDict(const std::string& key, const char * value)
@@ -23,6 +23,9 @@ JsonDict::JsonDict(const std::string& key, JsonDict& dictValue)
 JsonDict::JsonDict(std::vector<JsonDict>& values)
     : mKey(), mValue()
 {
+  if (values.empty()) {
+    throw std::invalid_argument("Cannot create a JsonDict from an empty vector");
+  }
   std::stringstream dict;
   std::vector<JsonDict>::iterator it;
   for (it = values.begin(); it != values.end(); it++) {

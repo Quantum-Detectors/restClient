@@ -208,4 +208,10 @@ BOOST_AUTO_TEST_CASE(MergeTest)
       "}");
 }
 
+BOOST_AUTO_TEST_CASE(EmptyRaisesTest)
+{
+  std::vector<JsonDict> emptyVector;
+  BOOST_REQUIRE_THROW(JsonDict test = JsonDict(emptyVector), std::invalid_argument);
+}
+
 BOOST_AUTO_TEST_SUITE_END();
