@@ -26,7 +26,12 @@ JsonDict::JsonDict(std::vector<JsonDict>& values)
   std::stringstream dict;
   std::vector<JsonDict>::iterator it;
   for (it = values.begin(); it != values.end(); it++) {
-    dict << it->mKey << ": " << it->mValue;
+    if (it->mKey.empty()) {
+      dict << it->mValue;
+    }
+    else {
+      dict << it->mKey << ": " << it->mValue;
+    }
     if (it < values.end() - 1) {
       dict << ", ";
     }

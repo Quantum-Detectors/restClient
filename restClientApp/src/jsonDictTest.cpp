@@ -178,4 +178,34 @@ BOOST_AUTO_TEST_CASE(ComplicatedTest)
   "}");
 }
 
+BOOST_AUTO_TEST_CASE(MergeTest)
+{
+  std::vector<JsonDict> firstVector;
+  firstVector.push_back(JsonDict("answer", 42));
+  firstVector.push_back(JsonDict("happy", true));
+  JsonDict firstDict = JsonDict(firstVector);
+  JsonDict first = JsonDict(firstDict);
+  BOOST_TEST_MESSAGE("First: " + first.str());
+
+  std::vector<JsonDict> secondVector;
+  secondVector.push_back(JsonDict("currency", "GBP"));
+  secondVector.push_back(JsonDict("value", 42.99));
+  JsonDict secondDict = JsonDict(secondVector);
+  JsonDict second = JsonDict(secondDict);
+  BOOST_TEST_MESSAGE("Second: " + second.str());
+
+  std::vector<JsonDict> testVector;
+  testVector.push_back(first);
+  testVector.push_back(second);
+  JsonDict testDict(testVector);
+
+  BOOST_TEST_MESSAGE("Merged: " + testDict.str());
+  BOOST_CHECK_EQUAL(testDict.str(), "{"
+      "\"answer\": 42, "
+      "\"happy\": true, "
+      "\"currency\": \"GBP\", "
+      "\"value\": 42.99"
+      "}");
+}
+
 BOOST_AUTO_TEST_SUITE_END();
