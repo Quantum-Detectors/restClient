@@ -9,6 +9,7 @@ LIBRARY_IOC_Darwin = frozen
 LIBRARY_IOC_solaris = frozen
 
 frozen_SRCS += frozen.c
+INC += frozen.h
 
 include $(TOP)/configure/RULES
 #---------------------------------------
