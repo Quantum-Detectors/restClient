@@ -1,16 +1,15 @@
 #include "restApi.h"
 
 #include <stdexcept>
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <frozen.h>     // JSON parser
+#include <cstdlib>
+#include <cstdio>
+#include <cstring>
+#include <fcntl.h>
 
 #include <epicsStdio.h>
 #include <epicsTime.h>
 
-#include <fcntl.h>
+#include "jsonDict.h"
 
 #define EOL                     "\r\n"      // End of Line
 #define EOL_LEN                 2           // End of Line Length
@@ -329,8 +328,10 @@ int RestAPI::put(std::string subSystem, const std::string & param,
   int valueLen = 0;
   char valueBuf[MAX_BUF_SIZE] = "";
 
+  JsonDict valueDict = JsonDict(key, value.c_str());
+
   valueLen = epicsSnprintf(valueBuf, sizeof(valueBuf),
-                           "{\"%s\": %s}", key.c_str(), value.c_str());
+                           valueDict.str().c_str(), key.c_str(), value.c_str());
 
   return basePut(subSystem, param, valueBuf, valueLen, reply, timeout);
 }
