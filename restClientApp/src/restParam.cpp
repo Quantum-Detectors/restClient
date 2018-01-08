@@ -368,21 +368,28 @@ RestParam::RestParam(RestParamSet *set, std::string const & asynName, rest_param
 asynStatus RestParam::bindAsynParam()
 {
     const char *functionName = "bindAsynParam";
-    asynStatus status;
+    asynStatus status = asynSuccess;
     // Check if asyn parameter already exists, create if it doesn't
     if(mSet->getPortDriver()->findParam(mAsynName.c_str(), &mAsynIndex)) {
+        FLOW_ARGS("[param=%s] creating param", mAsynName.c_str());
         status = mSet->getPortDriver()->createParam(mAsynName.c_str(), mAsynType, &mAsynIndex);
         if(status) {
             ERR_ARGS("[param=%s] failed to create param", mAsynName.c_str());
-        }
-        else {
-            return status;
+            throw std::runtime_error(mAsynName);
         }
     }
     else {
-        ERR_ARGS("[param=%s] already exists", mAsynName.c_str());
+        RestParam* param = mSet->getByIndex(mAsynIndex);
+        if (param != NULL) {
+            ERR_ARGS("[param=%s] param is already bound to %s",
+                     mAsynName.c_str(), param->mName.c_str());
+            throw std::runtime_error(mAsynName);
+        }
+        else {
+            FLOW_ARGS("[param=%s] binding to existing param", mAsynName.c_str());
+        }
     }
-    throw std::runtime_error(mAsynName);
+    return status;
 }
 
 void RestParam::setCommand()
