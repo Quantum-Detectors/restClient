@@ -30,6 +30,7 @@ private:
     std::vector <std::string> mEnumValues, mCriticalValues;
     double mEpsilon;
     bool mCustomEnum;
+    unsigned int mArrayIndex;
 
     asynStatus bindAsynParam();
 
@@ -71,7 +72,7 @@ public:
               std::string subSystem = "", std::string const & name = "");
     // REST type constructor
     RestParam(RestParamSet *set, std::string const & asynName, rest_param_type_t restType,
-              std::string subSystem = "", std::string const & name = "");
+              std::string subSystem = "", std::string const & name = "", int arrayIndex = -1);
 
     void setCommand();
     void setEpsilon (double epsilon);
@@ -123,7 +124,8 @@ public:
                        std::string subSystem = "", std::string const & name = "");
     // REST type create
     RestParam * create(std::string const & asynName, rest_param_type_t restType,
-                       std::string subSystem = "", std::string const & name = "");
+                       std::string subSystem = "", std::string const & name = "",
+                       int arrayIndex = -1);
 
     void addToConfigMap(std::string const & name, RestParam *p);
 

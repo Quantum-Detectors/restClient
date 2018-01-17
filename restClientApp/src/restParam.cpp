@@ -333,12 +333,12 @@ RestParam::RestParam(RestParamSet *set, std::string const & asynName, asynParamT
 }
 
 RestParam::RestParam(RestParamSet *set, std::string const & asynName, rest_param_type_t restType,
-                     std::string subSystem, std::string const & name)
+                     std::string subSystem, std::string const & name, int arrayIndex)
     : mSet(set),
       mAsynName(asynName), mAsynType(asynParamNotDefined), mAsynIndex(-1),
       mSubSystem(subSystem), mName(name), mRemote(!mName.empty()), mType(restType),
       mAccessMode(), mMin(), mMax(), mEnumValues(), mCriticalValues(), mEpsilon(0.0),
-      mCustomEnum(false)
+      mCustomEnum(false), mArrayIndex(arrayIndex)
 {
     const char *functionName = "RestParam<restType>";
 
@@ -541,8 +541,21 @@ int RestParam::baseFetch (string & rawValue, int timeout)
         mMax.valInt = (int) (mEnumValues.size() - 1);
     }
 
-    if(parseValue(tokens, rawValue))
-    {
+    int parseError = 0;
+    if(mArrayIndex >= 0) {
+        std::vector<std::string> valueArray = parseArray(tokens, mSet->getApi()->PARAM_VALUE);
+        if (valueArray.size() > mArrayIndex) {
+            rawValue = valueArray[mArrayIndex];
+        }
+        else {
+            ERR_ARGS("Unable to parse index %d from array", mArrayIndex);
+            parseError = 1;
+        }
+    }
+    else {
+        parseError = parseValue(tokens, rawValue);
+    }
+    if(parseError) {
         const char *msg = "unable to parse raw value";
         ERR_ARGS("[param=%s] %s\n[%s]", mName.c_str(), msg, buffer.c_str());
         return EXIT_FAILURE;
@@ -987,9 +1000,10 @@ RestParam *RestParamSet::create(std::string const & asynName, asynParamType asyn
 }
 
 RestParam *RestParamSet::create(std::string const & asynName, rest_param_type_t restType,
-                                std::string subSystem, std::string const & name)
+                                std::string subSystem, std::string const & name,
+                                int arrayIndex)
 {
-  RestParam *p = new RestParam(this, asynName, restType, subSystem, name);
+  RestParam *p = new RestParam(this, asynName, restType, subSystem, name, arrayIndex);
 
   mAsynMap.insert(std::make_pair(p->getIndex(), p));
   return p;
