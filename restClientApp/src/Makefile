@@ -7,6 +7,8 @@ USR_INCLUDES += -I$(TOP)/restClientApp/frozenSrc
 
 LIBRARY_IOC = restClient
 
+CXXFLAGS += -O0
+
 LIB_SRCS += restApi.cpp
 LIB_SRCS += restParam.cpp
 LIB_SRCS += jsonDict.cpp

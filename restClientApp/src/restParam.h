@@ -30,7 +30,7 @@ private:
     std::vector <std::string> mEnumValues, mCriticalValues;
     double mEpsilon;
     bool mCustomEnum;
-    unsigned int mArrayIndex;
+    bool mArrayValue;
 
     asynStatus bindAsynParam();
 
@@ -55,15 +55,16 @@ private:
     int getEnumIndex (std::string const & value, size_t & index);
     bool isCritical (std::string const & value);
 
-    int getParam (int & value);
-    int getParam (double & value);
-    int getParam (std::string & value);
+    int getParam(int& value,               int address = 0);
+    int getParam(double& value,            int address = 0);
+    int getParam(std::string& value,       int address = 0);
 
-    int setParam (int value);
-    int setParam (double value);
-    int setParam (std::string const & value);
+    int setParam(int value,                int address = 0);
+    int setParam(double value,             int address = 0);
+    int setParam(const std::string& value, int address = 0);
 
     int baseFetch (std::string & rawValue, int timeout = DEFAULT_TIMEOUT);
+    int baseFetch(std::vector<std::string>& rawValue, int timeout = DEFAULT_TIMEOUT);
     int basePut (std::string const & rawValue, int timeout = DEFAULT_TIMEOUT);
 
 public:
@@ -71,8 +72,8 @@ public:
     RestParam(RestParamSet *set, std::string const & asynName, asynParamType asynType,
               std::string subSystem = "", std::string const & name = "");
     // REST type constructor
-    RestParam(RestParamSet *set, std::string const & asynName, rest_param_type_t restType,
-              std::string subSystem = "", std::string const & name = "", int arrayIndex = -1);
+    RestParam(RestParamSet * set, const std::string& asynName, rest_param_type_t restType,
+              const std::string& subSystem = "", const std::string& name = "", bool arrayValue = false);
 
     void setCommand();
     void setEpsilon (double epsilon);
@@ -80,18 +81,22 @@ public:
     void setEnumValues (std::vector<std::string> const & values);
 
     // Get the underlying asyn parameter value
-    int get (bool & value);
-    int get (int & value);
-    int get (double & value);
-    int get (std::string & value);
+    int get(bool& value,        int address = 0);
+    int get(int& value,         int address = 0);
+    int get(double& value,      int address = 0);
+    int get(std::string& value, int address = 0);
 
     // Fetch the current value from the device
     // Update underlying asyn parameter and return the value
-    int fetch (void);
-    int fetch (bool & value,        int timeout = DEFAULT_TIMEOUT);
-    int fetch (int & value,         int timeout = DEFAULT_TIMEOUT);
-    int fetch (double & value,      int timeout = DEFAULT_TIMEOUT);
-    int fetch (std::string & value, int timeout = DEFAULT_TIMEOUT);
+    int fetch();
+    int fetch(bool& value,                                      int timeout = DEFAULT_TIMEOUT);
+    int fetch(std::vector<bool>& value,        int address = 0, int timeout = DEFAULT_TIMEOUT);
+    int fetch(int& value,                                       int timeout = DEFAULT_TIMEOUT);
+    int fetch(std::vector<int>& value,         int address = 0, int timeout = DEFAULT_TIMEOUT);
+    int fetch(double& value,                                    int timeout = DEFAULT_TIMEOUT);
+    int fetch(std::vector<double>& value,      int address = 0, int timeout = DEFAULT_TIMEOUT);
+    int fetch(std::string & value,                              int timeout = DEFAULT_TIMEOUT);
+    int fetch(std::vector<std::string>& value, int address = 0, int timeout = DEFAULT_TIMEOUT);
 
     // Put the value both to the device (if it is connected to a device
     // parameter) and to the underlying asyn parameter if successful. Update
@@ -123,9 +128,9 @@ public:
     RestParam * create(std::string const & asynName, asynParamType asynType,
                        std::string subSystem = "", std::string const & name = "");
     // REST type create
-    RestParam * create(std::string const & asynName, rest_param_type_t restType,
-                       std::string subSystem = "", std::string const & name = "",
-                       int arrayIndex = -1);
+    RestParam * create(const std::string& asynName, rest_param_type_t restType,
+                       const std::string& subSystem = "", const std::string& name = "",
+                       bool arrayValue = false);
 
     void addToConfigMap(std::string const & name, RestParam *p);
 
