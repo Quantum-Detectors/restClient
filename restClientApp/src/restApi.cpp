@@ -309,7 +309,6 @@ int RestAPI::parseHeader (response_t *response)
 int RestAPI::put (std::string subSystem, string const & param,
         string const & value,string * reply, int timeout)
 {
-    const char *functionName = "put";
 
     int valueLen = 0;
     char valueBuf[MAX_BUF_SIZE] = "";
@@ -323,7 +322,6 @@ int RestAPI::put(std::string subSystem, const std::string & param,
                  const std::string & key, const std::string & value,
                  std::string * reply, int timeout)
 {
-  const char *functionName = "put<key, value>";
 
   int valueLen = 0;
   char valueBuf[MAX_BUF_SIZE] = "";
