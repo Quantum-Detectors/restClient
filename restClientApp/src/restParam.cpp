@@ -333,12 +333,12 @@ RestParam::RestParam(RestParamSet *set, std::string const & asynName, asynParamT
 }
 
 RestParam::RestParam(RestParamSet * set, const std::string& asynName, rest_param_type_t restType,
-                     const std::string& subSystem, const std::string& name, bool arrayValue)
+                     const std::string& subSystem, const std::string& name, size_t arraySize)
     : mSet(set),
       mAsynName(asynName), mAsynType(asynParamNotDefined), mAsynIndex(-1),
       mSubSystem(subSystem), mName(name), mRemote(!mName.empty()), mType(restType),
       mAccessMode(), mMin(), mMax(), mEnumValues(), mCriticalValues(), mEpsilon(0.0),
-      mCustomEnum(false), mArrayValue(arrayValue)
+      mCustomEnum(false), mArraySize(arraySize)
 {
     const char *functionName = "RestParam<restType>";
 
@@ -434,6 +434,18 @@ int RestParam::get(bool& value, int address)
     return EXIT_SUCCESS;
 }
 
+int RestParam::get(std::vector<bool>& value)
+{
+  int status = 0;
+  value.resize(mArraySize);
+  for (int index = 0; (size_t) index != value.size(); ++index) {
+    int temp;
+    status |= getParam(temp, index);
+    value[index] = (bool) temp;
+  }
+  return status;
+}
+
 int RestParam::get(int& value, int address)
 {
     if(mAsynType == asynParamInt32)
@@ -454,9 +466,29 @@ int RestParam::get(int& value, int address)
     return EXIT_SUCCESS;
 }
 
+int RestParam::get(std::vector<int>& value)
+{
+  int status = 0;
+  value.resize(mArraySize);
+  for (int index = 0; (size_t) index != value.size(); ++index) {
+    status |= getParam(value[index], index);
+  }
+  return status;
+}
+
 int RestParam::get(double& value, int address)
 {
     return (int) getParam(value, address);
+}
+
+int RestParam::get(std::vector<double>& value)
+{
+  int status = 0;
+  value.resize(mArraySize);
+  for (int index = 0; (size_t) index != value.size(); ++index) {
+    status |= getParam(value[index], index);
+  }
+  return status;
 }
 
 int RestParam::get(std::string& value, int address)
@@ -470,6 +502,16 @@ int RestParam::get(std::string& value, int address)
     }
 
     return (int) getParam(value, address);
+}
+
+int RestParam::get(std::vector<std::string>& value)
+{
+  int status = 0;
+  value.resize(mArraySize);
+  for (int index = 0; (size_t) index != value.size(); ++index) {
+    status |= getParam(value[index], index);
+  }
+  return status;
 }
 
 int RestParam::baseFetch (string & rawValue, int timeout)
@@ -688,7 +730,7 @@ int RestParam::fetch (bool & value, int timeout)
     return get(value);
 }
 
-int RestParam::fetch(std::vector<bool>& value, int address, int timeout)
+int RestParam::fetch(std::vector<bool>& value, int timeout)
 {
     const char *functionName = "fetch<vector<bool>>";
     if(mRemote && mType != REST_P_COMMAND) {
@@ -785,7 +827,7 @@ int RestParam::fetch (int & value, int timeout)
     return get(value);
 }
 
-int RestParam::fetch(std::vector<int>& value, int address, int timeout)
+int RestParam::fetch(std::vector<int>& value, int timeout)
 {
     const char *functionName = "fetch<vector<int>>";
     if (mRemote && mType != REST_P_COMMAND) {
@@ -828,7 +870,7 @@ int RestParam::fetch(std::vector<int>& value, int address, int timeout)
             ERR_ARGS("%d", value[index]);
         }
     }
-    return get(value[address], address);
+    return get(value);
 }
 
 int RestParam::fetch (double & value, int timeout)
@@ -866,9 +908,11 @@ int RestParam::fetch (double & value, int timeout)
     return get(value);
 }
 
-int RestParam::fetch(std::vector<double>& value, int address, int timeout)
+int RestParam::fetch(std::vector<double>& value, int timeout)
 {
     const char *functionName = "fetch<double>";
+
+    value.resize(mArraySize);
     if(mRemote && mType != REST_P_COMMAND) {
         if(mType != REST_P_DOUBLE && mType != REST_P_UNINIT) {
             ERR_ARGS("[param=%s] unexpected type %d", mAsynName.c_str(), mType);
@@ -881,7 +925,6 @@ int RestParam::fetch(std::vector<double>& value, int address, int timeout)
             return EXIT_FAILURE;
         }
 
-        value.resize(rawValue.size());
         for (size_t index = 0; index != rawValue.size(); ++index) {
             if (parseValue(rawValue[index], value[index])) {
                 return EXIT_FAILURE;
@@ -894,7 +937,7 @@ int RestParam::fetch(std::vector<double>& value, int address, int timeout)
             FLOW_ARGS("%lf", value[index]);
         }
     }
-    return get(value[address], address);
+    return get(value);
 }
 
 int RestParam::fetch (string & value, int timeout)
@@ -930,7 +973,7 @@ int RestParam::fetch (string & value, int timeout)
     return get(value);
 }
 
-int RestParam::fetch(std::vector<std::string>& value, int address, int timeout)
+int RestParam::fetch(std::vector<std::string>& value, int timeout)
 {
     const char *functionName = "fetch<vector<string>>";
 
@@ -953,7 +996,7 @@ int RestParam::fetch(std::vector<std::string>& value, int address, int timeout)
         }
         return EXIT_SUCCESS;
     }
-    return get(value[address], address);
+    return get(value);
 }
 
 int RestParam::fetch()
@@ -962,7 +1005,7 @@ int RestParam::fetch()
     {
     case asynParamInt32:
     {
-        if (mArrayValue) {
+        if (mArraySize) {
             std::vector<int> dummy;
             return fetch(dummy);
         }
@@ -973,7 +1016,7 @@ int RestParam::fetch()
     }
     case asynParamFloat64:
     {
-        if (mArrayValue) {
+        if (mArraySize) {
             std::vector<double> dummy;
             return fetch(dummy);
         }
@@ -984,7 +1027,7 @@ int RestParam::fetch()
     }
     case asynParamOctet:
     {
-        if (mArrayValue) {
+        if (mArraySize) {
             std::vector<std::string> dummy;
             return fetch(dummy);
         }

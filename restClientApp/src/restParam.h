@@ -30,7 +30,7 @@ private:
     std::vector <std::string> mEnumValues, mCriticalValues;
     double mEpsilon;
     bool mCustomEnum;
-    bool mArrayValue;
+    size_t mArraySize;
 
     asynStatus bindAsynParam();
 
@@ -73,7 +73,8 @@ public:
               std::string subSystem = "", std::string const & name = "");
     // REST type constructor
     RestParam(RestParamSet * set, const std::string& asynName, rest_param_type_t restType,
-              const std::string& subSystem = "", const std::string& name = "", bool arrayValue = false);
+              const std::string& subSystem = "", const std::string& name = "",
+              size_t arraySize = 0);
 
     void setCommand();
     void setEpsilon (double epsilon);
@@ -81,22 +82,26 @@ public:
     void setEnumValues (std::vector<std::string> const & values);
 
     // Get the underlying asyn parameter value
-    int get(bool& value,        int address = 0);
-    int get(int& value,         int address = 0);
-    int get(double& value,      int address = 0);
-    int get(std::string& value, int address = 0);
+    int get(bool& value,                      int address = 0);
+    int get(std::vector<bool>& value);
+    int get(int& value,                       int address = 0);
+    int get(std::vector<int>& value);
+    int get(double& value,                    int address = 0);
+    int get(std::vector<double>& value);
+    int get(std::string& value,               int address = 0);
+    int get(std::vector<std::string>& value);
 
     // Fetch the current value from the device
     // Update underlying asyn parameter and return the value
     int fetch();
-    int fetch(bool& value,                                      int timeout = DEFAULT_TIMEOUT);
-    int fetch(std::vector<bool>& value,        int address = 0, int timeout = DEFAULT_TIMEOUT);
-    int fetch(int& value,                                       int timeout = DEFAULT_TIMEOUT);
-    int fetch(std::vector<int>& value,         int address = 0, int timeout = DEFAULT_TIMEOUT);
-    int fetch(double& value,                                    int timeout = DEFAULT_TIMEOUT);
-    int fetch(std::vector<double>& value,      int address = 0, int timeout = DEFAULT_TIMEOUT);
-    int fetch(std::string & value,                              int timeout = DEFAULT_TIMEOUT);
-    int fetch(std::vector<std::string>& value, int address = 0, int timeout = DEFAULT_TIMEOUT);
+    int fetch(bool& value,                     int timeout = DEFAULT_TIMEOUT);
+    int fetch(std::vector<bool>& value,        int timeout = DEFAULT_TIMEOUT);
+    int fetch(int& value,                      int timeout = DEFAULT_TIMEOUT);
+    int fetch(std::vector<int>& value,         int timeout = DEFAULT_TIMEOUT);
+    int fetch(double& value,                   int timeout = DEFAULT_TIMEOUT);
+    int fetch(std::vector<double>& value,      int timeout = DEFAULT_TIMEOUT);
+    int fetch(std::string & value,             int timeout = DEFAULT_TIMEOUT);
+    int fetch(std::vector<std::string>& value, int timeout = DEFAULT_TIMEOUT);
 
     // Put the value both to the device (if it is connected to a device
     // parameter) and to the underlying asyn parameter if successful. Update
