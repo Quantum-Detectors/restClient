@@ -79,6 +79,7 @@ public:
     void setCommand();
     void setEpsilon (double epsilon);
     int getIndex (void);
+    std::string getName();
     void setEnumValues (std::vector<std::string> const & values);
 
     // Get the underlying asyn parameter value

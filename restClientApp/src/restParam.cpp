@@ -408,6 +408,11 @@ int RestParam::getIndex (void)
     return mAsynIndex;
 }
 
+std::string RestParam::getName()
+{
+  return mName;
+}
+
 void RestParam::setEnumValues (vector<string> const & values)
 {
     mEnumValues = values;
