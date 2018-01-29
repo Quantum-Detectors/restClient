@@ -1089,6 +1089,9 @@ int RestParam::put (bool value, int timeout)
     if(mType == REST_P_UNINIT && fetch())
         return EXIT_FAILURE;
 
+    if(fetch())
+        return EXIT_FAILURE;
+
     if(mType != REST_P_BOOL && mType != REST_P_ENUM)
         return EXIT_FAILURE;
 
@@ -1125,6 +1128,9 @@ int RestParam::put (int value, int timeout)
     if(mRemote)
     {
         if(mType == REST_P_UNINIT && fetch())
+            return EXIT_FAILURE;
+
+        if(fetch())
             return EXIT_FAILURE;
 
         if(mType != REST_P_BOOL && mType != REST_P_INT &&
@@ -1191,6 +1197,9 @@ int RestParam::put (double value, int timeout)
         if(mType == REST_P_UNINIT && fetch())
             return EXIT_FAILURE;
 
+        if(fetch())
+            return EXIT_FAILURE;
+
         if(mType != REST_P_DOUBLE)
             return EXIT_FAILURE;
 
@@ -1231,6 +1240,9 @@ int RestParam::put (string const & value, int timeout)
     }
 
     if(mType == REST_P_UNINIT && fetch())
+        return EXIT_FAILURE;
+
+    if(fetch())
         return EXIT_FAILURE;
 
     if(mType != REST_P_STRING && mType != REST_P_ENUM)
