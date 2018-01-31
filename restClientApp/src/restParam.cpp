@@ -179,13 +179,13 @@ int RestParam::initialise(struct json_token * tokens)
     return EXIT_FAILURE;
   }
 
-  if (mStrictInitialisation) {
-    if (mCustomEnum) {
-      mType = REST_P_ENUM;
-    }
-    else {
+  if (mType == REST_P_ENUM) {
+    if (!mCustomEnum) {
       mEnumValues = parseArray(tokens, mSet->getApi()->PARAM_ENUM_VALUES);
     }
+  }
+
+  if (mStrictInitialisation) {
 
     mCriticalValues = parseArray(tokens, mSet->getApi()->PARAM_CRITICAL_VALUES);
 
