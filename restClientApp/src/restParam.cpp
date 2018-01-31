@@ -724,7 +724,7 @@ int RestParam::fetch(std::vector<bool>& value, int timeout)
             return EXIT_FAILURE;
         }
 
-        value.resize(rawValue.size());
+        value.resize(mArraySize);
         for (int index = 0; (size_t) index != rawValue.size(); ++index) {
             if (mType == REST_P_BOOL) {
                 bool temp;
@@ -821,7 +821,7 @@ int RestParam::fetch(std::vector<int>& value, int timeout)
             return EXIT_FAILURE;
         }
 
-        value.resize(rawValue.size());
+        value.resize(mArraySize);
         for (int index = 0; (size_t) index != rawValue.size(); ++index) {
             if (mType == REST_P_ENUM) {
                 size_t eIndex;
