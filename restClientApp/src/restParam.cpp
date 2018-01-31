@@ -1266,11 +1266,11 @@ RestParam *RestParamSet::create(std::string const & asynName, asynParamType asyn
     return p;
 }
 
-RestParam *RestParamSet::create(const std::string& asynName, rest_param_type_t restType,
-                                const std::string& subSystem, std::string const & name,
-                                bool arrayValue)
+RestParam * RestParamSet::create(const std::string& asynName, rest_param_type_t restType,
+                                 const std::string& subSystem, std::string const & name,
+                                 size_t arraySize, bool strict)
 {
-  RestParam * p = new RestParam(this, asynName, restType, subSystem, name, arrayValue);
+  RestParam * p = new RestParam(this, asynName, restType, subSystem, name, arraySize, strict);
 
   mAsynMap.insert(std::make_pair(p->getIndex(), p));
   return p;

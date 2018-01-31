@@ -139,7 +139,7 @@ public:
     // REST type create
     RestParam * create(const std::string& asynName, rest_param_type_t restType,
                        const std::string& subSystem = "", const std::string& name = "",
-                       bool arrayValue = false);
+                       size_t arraySize = 0, bool strict = false);
 
     void addToConfigMap(std::string const & name, RestParam *p);
 
