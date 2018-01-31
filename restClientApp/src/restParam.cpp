@@ -162,6 +162,56 @@ int RestParam::parseMinMax (struct json_token *tokens, string const & key,
     return EXIT_SUCCESS;
 }
 
+int RestParam::initialise(struct json_token * tokens)
+{
+  const char *functionName = "initialise";
+
+  mInitialised = false;
+
+  if (mSet->getApi()->lookupAccessMode(mSubSystem, mAccessMode)) {
+    if (parseAccessMode(tokens, mAccessMode)) {
+      mAccessMode = REST_ACC_RO;
+    }
+  }
+
+  if (mType == REST_P_UNINIT && parseType(tokens, mType)) {
+    ERR_ARGS("[param=%s] unable to parse parameter type\n", mName.c_str());
+    return EXIT_FAILURE;
+  }
+
+  if (mStrictInitialisation) {
+    if (mCustomEnum) {
+      mType = REST_P_ENUM;
+    }
+    else {
+      mEnumValues = parseArray(tokens, mSet->getApi()->PARAM_ENUM_VALUES);
+    }
+
+    mCriticalValues = parseArray(tokens, mSet->getApi()->PARAM_CRITICAL_VALUES);
+
+    if(mType == REST_P_INT || mType == REST_P_UINT || mType == REST_P_DOUBLE) {
+      if(parseMinMax(tokens, mSet->getApi()->PARAM_MIN, mMin)) {
+        ERR_ARGS("[param=%s] unable to parse min limit\n", mName.c_str());
+        return EXIT_FAILURE;
+      }
+
+      if(parseMinMax(tokens, mSet->getApi()->PARAM_MAX, mMax)) {
+        ERR_ARGS("[param=%s] unable to parse max limit\n", mName.c_str());
+        return EXIT_FAILURE;
+      }
+    }
+    else if (mType == REST_P_ENUM) {
+      mMin.exists = true;
+      mMax.exists = true;
+      mMin.valInt = 0;
+      mMax.valInt = (int) (mEnumValues.size() - 1);
+    }
+  }
+
+  mInitialised = true;
+  return EXIT_SUCCESS;
+}
+
 int RestParam::parseValue (struct json_token *tokens, string & rawValue)
 {
     const char *functionName = "parseValue";
@@ -333,12 +383,13 @@ RestParam::RestParam(RestParamSet *set, std::string const & asynName, asynParamT
 }
 
 RestParam::RestParam(RestParamSet * set, const std::string& asynName, rest_param_type_t restType,
-                     const std::string& subSystem, const std::string& name, size_t arraySize)
+                     const std::string& subSystem, const std::string& name, size_t arraySize,
+                     bool strict)
     : mSet(set),
       mAsynName(asynName), mAsynType(asynParamNotDefined), mAsynIndex(-1),
       mSubSystem(subSystem), mName(name), mRemote(!mName.empty()), mType(restType),
       mAccessMode(), mMin(), mMax(), mEnumValues(), mCriticalValues(), mEpsilon(0.0),
-      mCustomEnum(false), mArraySize(arraySize)
+      mCustomEnum(false), mArraySize(arraySize), mInitialised(false), mStrictInitialisation(strict)
 {
     const char *functionName = "RestParam<restType>";
 
@@ -544,48 +595,12 @@ int RestParam::baseFetch (string & rawValue, int timeout)
         return EXIT_FAILURE;
     }
 
-    if(mType == REST_P_UNINIT)
-    {
-        if(parseType(tokens, mType))
-        {
-            const char *msg = "unable to parse parameter type";
+    if (!mInitialised) {
+        if (initialise(tokens)) {
+            const char *msg = "unable to initialise param from response";
             ERR_ARGS("[param=%s] %s\n[%s]", mName.c_str(), msg, buffer.c_str());
             return EXIT_FAILURE;
         }
-
-        if(mSet->getApi()->lookupAccessMode(mSubSystem, mAccessMode))
-            if(parseAccessMode(tokens, mAccessMode))
-                mAccessMode = REST_ACC_RO;
-
-        if(mCustomEnum)
-            mType = REST_P_ENUM;
-        else
-            mEnumValues = parseArray(tokens, mSet->getApi()->PARAM_ENUM_VALUES.c_str());
-        mCriticalValues = parseArray(tokens, mSet->getApi()->PARAM_CRITICAL_VALUES.c_str());
-    }
-
-    if(mType == REST_P_INT || mType == REST_P_UINT || mType == REST_P_DOUBLE)
-    {
-        if(parseMinMax(tokens, mSet->getApi()->PARAM_MIN.c_str(), mMin))
-        {
-            const char *msg = "unable to parse min limit";
-            ERR_ARGS("[param=%s] %s\n[%s]", mName.c_str(), msg, buffer.c_str());
-            return EXIT_FAILURE;
-        }
-
-        if(parseMinMax(tokens, mSet->getApi()->PARAM_MAX.c_str(), mMax))
-        {
-            const char *msg = "unable to parse max limit";
-            ERR_ARGS("[param=%s] %s\n[%s]", mName.c_str(), msg, buffer.c_str());
-            return EXIT_FAILURE;
-        }
-    }
-    else if(mType == REST_P_ENUM)
-    {
-        mMin.exists = true;
-        mMax.exists = true;
-        mMin.valInt = 0;
-        mMax.valInt = (int) (mEnumValues.size() - 1);
     }
 
     if(parseValue(tokens, rawValue))
@@ -624,48 +639,12 @@ int RestParam::baseFetch(std::vector<std::string>& rawValue, int timeout)
         return EXIT_FAILURE;
     }
 
-    if(mType == REST_P_UNINIT)
-    {
-        if(parseType(tokens, mType))
-        {
-            const char *msg = "unable to parse parameter type";
+    if (!mInitialised) {
+        if (initialise(tokens)) {
+            const char *msg = "unable to initialise param from response";
             ERR_ARGS("[param=%s] %s\n[%s]", mName.c_str(), msg, buffer.c_str());
             return EXIT_FAILURE;
         }
-
-        if(mSet->getApi()->lookupAccessMode(mSubSystem, mAccessMode))
-            if(parseAccessMode(tokens, mAccessMode))
-                mAccessMode = REST_ACC_RO;
-
-        if(mCustomEnum)
-            mType = REST_P_ENUM;
-        else
-            mEnumValues = parseArray(tokens, mSet->getApi()->PARAM_ENUM_VALUES.c_str());
-        mCriticalValues = parseArray(tokens, mSet->getApi()->PARAM_CRITICAL_VALUES.c_str());
-    }
-
-    if(mType == REST_P_INT || mType == REST_P_UINT || mType == REST_P_DOUBLE)
-    {
-        if(parseMinMax(tokens, mSet->getApi()->PARAM_MIN.c_str(), mMin))
-        {
-            const char *msg = "unable to parse min limit";
-            ERR_ARGS("[param=%s] %s\n[%s]", mName.c_str(), msg, buffer.c_str());
-            return EXIT_FAILURE;
-        }
-
-        if(parseMinMax(tokens, mSet->getApi()->PARAM_MAX.c_str(), mMax))
-        {
-            const char *msg = "unable to parse max limit";
-            ERR_ARGS("[param=%s] %s\n[%s]", mName.c_str(), msg, buffer.c_str());
-            return EXIT_FAILURE;
-        }
-    }
-    else if(mType == REST_P_ENUM)
-    {
-        mMin.exists = true;
-        mMax.exists = true;
-        mMin.valInt = 0;
-        mMax.valInt = (int) (mEnumValues.size() - 1);
     }
 
     std::vector<std::string> valueArray = parseArray(tokens, mSet->getApi()->PARAM_VALUE);
@@ -1091,11 +1070,9 @@ int RestParam::put (bool value, int timeout)
         return EXIT_SUCCESS;
     }
 
-    if(mType == REST_P_UNINIT && fetch())
+    if (!mInitialised && fetch()) {
         return EXIT_FAILURE;
-
-    if(fetch())
-        return EXIT_FAILURE;
+    }
 
     if(mType != REST_P_BOOL && mType != REST_P_ENUM)
         return EXIT_FAILURE;
@@ -1132,11 +1109,9 @@ int RestParam::put (int value, int timeout)
     FLOW_ARGS("%d", value);
     if(mRemote)
     {
-        if(mType == REST_P_UNINIT && fetch())
+        if (!mInitialised && fetch()) {
             return EXIT_FAILURE;
-
-        if(fetch())
-            return EXIT_FAILURE;
+        }
 
         if(mType != REST_P_BOOL && mType != REST_P_INT &&
            mType != REST_P_UINT && mType != REST_P_ENUM &&
@@ -1199,11 +1174,9 @@ int RestParam::put (double value, int timeout)
 
     if(mRemote)
     {
-        if(mType == REST_P_UNINIT && fetch())
+        if (!mInitialised && fetch()) {
             return EXIT_FAILURE;
-
-        if(fetch())
-            return EXIT_FAILURE;
+        }
 
         if(mType != REST_P_DOUBLE)
             return EXIT_FAILURE;
@@ -1244,11 +1217,9 @@ int RestParam::put (string const & value, int timeout)
         return EXIT_SUCCESS;
     }
 
-    if(mType == REST_P_UNINIT && fetch())
+    if (!mInitialised && fetch()) {
         return EXIT_FAILURE;
-
-    if(fetch())
-        return EXIT_FAILURE;
+    }
 
     if(mType != REST_P_STRING && mType != REST_P_ENUM)
         return EXIT_FAILURE;

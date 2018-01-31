@@ -32,6 +32,8 @@ private:
     bool mCustomEnum;
     size_t mArraySize;
 
+    bool mInitialised, mStrictInitialisation;
+
     asynStatus bindAsynParam();
 
     std::vector<std::string> parseArray (struct json_token *tokens,
@@ -41,6 +43,7 @@ private:
             rest_access_mode_t & accessMode);
     int parseMinMax (struct json_token *tokens, std::string const & key,
             rest_min_max_t & minMax);
+    int initialise(struct json_token * tokens);
 
     int parseValue (struct json_token *tokens, std::string & rawValue);
     int parseValue (std::string const & rawValue, bool & value);
@@ -74,7 +77,7 @@ public:
     // REST type constructor
     RestParam(RestParamSet * set, const std::string& asynName, rest_param_type_t restType,
               const std::string& subSystem = "", const std::string& name = "",
-              size_t arraySize = 0);
+              size_t arraySize = 0, bool strict = false);
 
     void setCommand();
     void setEpsilon (double epsilon);
