@@ -851,7 +851,7 @@ int RestParam::fetch(std::vector<int>& value, int timeout)
                 ERR_ARGS("[param=%s[%d]] failed to set asyn parameter", mAsynName.c_str(), index);
                 return EXIT_FAILURE;
             }
-            ERR_ARGS("%d", value[index]);
+            FLOW_ARGS("%d", value[index]);
         }
     }
     return get(value);
