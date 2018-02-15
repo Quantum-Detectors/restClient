@@ -191,6 +191,7 @@ int RestAPI::doRequest (const request_t *request, response_t *response, int time
         else
         {
             ERR("failed to send");
+            epicsSocketDestroy(s->fd);
             s->closed = true;
             status = EXIT_FAILURE;
             goto end;
