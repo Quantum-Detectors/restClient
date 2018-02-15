@@ -43,6 +43,7 @@ protected:
     size_t mNumSockets;
     socket_t *mSockets;
 
+    int connectedSockets();
     int connect (socket_t *s);
     int setNonBlock (socket_t *s, bool nonBlock);
 

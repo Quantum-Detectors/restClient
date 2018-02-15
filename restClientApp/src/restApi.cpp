@@ -78,6 +78,17 @@ RestAPI::RestAPI (string const & hostname, int port, size_t numSockets) :
     }
 }
 
+int RestAPI::connectedSockets()
+{
+  int connected = 0;
+  for(size_t i = 0; i < mNumSockets; ++i){
+    if (!mSockets[i].closed){
+      connected++;
+    }
+  }
+  return connected;
+}
+
 // Private members
 
 int RestAPI::connect (socket_t *s)
