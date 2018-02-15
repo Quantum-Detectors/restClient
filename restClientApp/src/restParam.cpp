@@ -200,12 +200,6 @@ int RestParam::initialise(struct json_token * tokens)
         return EXIT_FAILURE;
       }
     }
-    else if (mType == REST_P_ENUM) {
-      mMin.exists = true;
-      mMax.exists = true;
-      mMin.valInt = 0;
-      mMax.valInt = (int) (mEnumValues.size() - 1);
-    }
   }
 
   mInitialised = true;
