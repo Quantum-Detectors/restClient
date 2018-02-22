@@ -1068,7 +1068,7 @@ int RestParam::put (bool value, int timeout)
         return EXIT_FAILURE;
     }
 
-    if(mType != REST_P_BOOL && mType != REST_P_ENUM)
+    if(mType != REST_P_BOOL && mType != REST_P_ENUM && mType != REST_P_COMMAND)
         return EXIT_FAILURE;
 
     int status;
