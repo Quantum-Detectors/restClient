@@ -195,6 +195,14 @@ int RestAPI::doRequest (const request_t *request, response_t *response, int time
         }
     }
 
+    // Flush the socket prior to write/read
+    this->setNonBlock(s, true);
+    received = 1;
+    while (received > 0){
+      received = recv(s->fd, response->data, response->dataLen, 0);
+    }
+    this->setNonBlock(s, false);
+
     if(send(s->fd, request->data, request->actualLen, 0) < 0)
     {
         if(s->retries++ < MAX_HTTP_RETRIES)
