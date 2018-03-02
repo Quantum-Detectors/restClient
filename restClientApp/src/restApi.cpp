@@ -164,6 +164,7 @@ int RestAPI::doRequest (const request_t *request, response_t *response, int time
     const char *functionName = "doRequest";
     int status = EXIT_SUCCESS;
     int received, ret;
+    int errcode;
     struct timeval recvTimeout;
     struct timeval *pRecvTimeout = NULL;
     fd_set fds;
@@ -200,6 +201,19 @@ int RestAPI::doRequest (const request_t *request, response_t *response, int time
     received = 1;
     while (received > 0){
       received = recv(s->fd, response->data, response->dataLen, 0);
+      errcode = errno;
+    }
+    if (received < 0){
+      // If the error code is EWOULDBLOCK then we have simply got
+      // nothing to flush.  Any other error code needs to be dealt
+      // with by closing the socket
+      if (errcode != EWOULDBLOCK){
+        ERR("failed to flush");
+        epicsSocketDestroy(s->fd);
+        s->closed = true;
+        status = EXIT_FAILURE;
+        goto end;
+      }
     }
     this->setNonBlock(s, false);
 
