@@ -418,6 +418,24 @@ asynStatus RestParam::bindAsynParam()
     if(mSet->getPortDriver()->findParam(mAsynName.c_str(), &mAsynIndex)) {
         FLOW_ARGS("[param=%s] creating param", mAsynName.c_str());
         status = mSet->getPortDriver()->createParam(mAsynName.c_str(), mAsynType, &mAsynIndex);
+        if (mArraySize){
+          for (size_t index = 0; index < mArraySize; index++){
+            switch (mAsynType){
+            case asynParamInt32:
+              mSet->getPortDriver()->setIntegerParam(index, mAsynIndex, 0);
+              break;
+            case asynParamFloat64:
+              mSet->getPortDriver()->setDoubleParam(index, mAsynIndex, 0.0);
+              break;
+            case asynParamOctet:
+              mSet->getPortDriver()->setStringParam(index, mAsynIndex, "");
+              break;
+            default:
+              // Do nothing if we are not using the parameter type
+              break;
+            }
+          }
+        }
         if(status) {
             ERR_ARGS("[param=%s] failed to create param", mAsynName.c_str());
             throw std::runtime_error(mAsynName);
