@@ -182,6 +182,11 @@ int RestParam::initialise(struct json_token * tokens)
   if (mType == REST_P_ENUM) {
     if (!mCustomEnum) {
       mEnumValues = parseArray(tokens, mSet->getApi()->PARAM_ENUM_VALUES);
+      // Confirm that the number of enum elements is non zero (non empty array), else fail
+      if (mEnumValues.empty()) {
+        ERR_ARGS("[param=%s] unable to parse enum values\n", mName.c_str());
+        return EXIT_FAILURE;
+      }
     }
   }
 
@@ -1027,35 +1032,35 @@ std::vector<int> RestParam::fetch(std::vector<std::string>& value, int timeout)
 
 int RestParam::fetch()
 {
+    int status = 0;
     if (mArraySize) {
-        std::vector<int> status;
+        std::vector<int> fetch_status;
         switch(mAsynType)
         {
             case asynParamInt32:
             {
                 std::vector<int> dummy;
-                status = fetch(dummy);
+                fetch_status = fetch(dummy);
                 break;
             }
             case asynParamFloat64:
             {
                 std::vector<double> dummy;
-                status = fetch(dummy);
+                fetch_status = fetch(dummy);
                 break;
             }
             case asynParamOctet:
             {
                 std::vector<std::string> dummy;
-                status = fetch(dummy);
+                fetch_status = fetch(dummy);
                 break;
             }
             default:
               break;
         }
-        return setConnectedStatus(status);
+        status |= setConnectedStatus(fetch_status);
     }
     else {
-        int status = 0;
         switch(mAsynType)
         {
             case asynParamInt32:
@@ -1079,8 +1084,9 @@ int RestParam::fetch()
             default:
               break;
         }
-        return setConnectedStatus(status);
+        status |= setConnectedStatus(status);
     }
+    return status;
 }
 
 int RestParam::basePut (const std::string & rawValue, int timeout)
