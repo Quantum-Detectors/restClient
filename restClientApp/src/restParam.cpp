@@ -2,6 +2,7 @@
 #include <vector>
 #include <stdexcept>
 #include <algorithm>
+#include <numeric>
 #include <sstream>
 
 #include <frozen.h>
@@ -1067,6 +1068,7 @@ int RestParam::fetch()
             default:
               break;
         }
+        status |= std::accumulate(fetch_status.begin(), fetch_status.end(), 0);
         status |= setConnectedStatus(fetch_status);
     }
     else {
