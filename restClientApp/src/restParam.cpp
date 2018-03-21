@@ -796,7 +796,7 @@ std::vector<int> RestParam::fetch(std::vector<bool>& value)
                     return status;
 
                 value[index] = (bool) eIndex;
-                status[index] = setParam((int) eIndex);
+                status[index] = setParam((int) eIndex, index);
                 if (status[index]) {
                     ERR_ARGS("[param=%s] failed to set asyn parameter", mAsynName.c_str());
                 }
