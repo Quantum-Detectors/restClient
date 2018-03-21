@@ -342,16 +342,19 @@ int RestParam::getParam(std::string& value, int address)
 
 int RestParam::setParam(int value, int address)
 {
+    if (address < 0) address = 0;
     return (int) mSet->getPortDriver()->setIntegerParam(address, mAsynIndex, value);
 }
 
 int RestParam::setParam(double value, int address)
 {
+    if (address < 0) address = 0;
     return (int) mSet->getPortDriver()->setDoubleParam(address, mAsynIndex, value);
 }
 
 int RestParam::setParam(const std::string& value, int address)
 {
+    if (address < 0) address = 0;
     return (int) mSet->getPortDriver()->setStringParam(address, mAsynIndex, value);
 }
 
@@ -402,6 +405,7 @@ RestParam::RestParam(RestParamSet *set, std::string const & asynName, asynParamT
     }
 
   bindAsynParam();
+  setTimeout(DEFAULT_TIMEOUT);
 }
 
 RestParam::RestParam(RestParamSet * set, const std::string& asynName, rest_param_type_t restType,
@@ -493,6 +497,11 @@ void RestParam::setCommand()
 void RestParam::setEpsilon (double epsilon)
 {
     mEpsilon = epsilon;
+}
+
+void RestParam::setTimeout(int timeout)
+{
+  mTimeout = timeout;
 }
 
 int RestParam::getIndex (void)
@@ -611,7 +620,7 @@ int RestParam::get(std::vector<std::string>& value)
   return status;
 }
 
-int RestParam::baseFetch (string & rawValue, int timeout)
+int RestParam::baseFetch(string & rawValue)
 {
     const char *functionName = "baseFetch";
     if(!mRemote)
@@ -624,7 +633,7 @@ int RestParam::baseFetch (string & rawValue, int timeout)
         return EXIT_SUCCESS;
 
     string buffer;
-    mSet->getApi()->get(mSubSystem, mName, buffer, timeout);
+    mSet->getApi()->get(mSubSystem, mName, buffer, mTimeout);
 
     // Parse JSON
     struct json_token tokens[MAX_JSON_TOKENS];
@@ -655,7 +664,7 @@ int RestParam::baseFetch (string & rawValue, int timeout)
     return EXIT_SUCCESS;
 }
 
-int RestParam::baseFetch(std::vector<std::string>& rawValue, int timeout)
+int RestParam::baseFetch(std::vector<std::string>& rawValue)
 {
     const char *functionName = "baseFetch<vector>";
     if(!mRemote)
@@ -668,7 +677,7 @@ int RestParam::baseFetch(std::vector<std::string>& rawValue, int timeout)
         return EXIT_SUCCESS;
 
     std::string buffer;
-    mSet->getApi()->get(mSubSystem, mName, buffer, timeout);
+    mSet->getApi()->get(mSubSystem, mName, buffer, mTimeout);
 
     // Parse JSON
     struct json_token tokens[MAX_JSON_TOKENS];
@@ -704,7 +713,7 @@ int RestParam::baseFetch(std::vector<std::string>& rawValue, int timeout)
     return EXIT_SUCCESS;
 }
 
-int RestParam::fetch (bool & value, int timeout)
+int RestParam::fetch(bool & value)
 {
     const char *functionName = "fetch<bool>";
     if(mRemote && mType != REST_P_COMMAND)
@@ -755,7 +764,7 @@ int RestParam::fetch (bool & value, int timeout)
     return EXIT_SUCCESS;
 }
 
-std::vector<int> RestParam::fetch(std::vector<bool>& value, int timeout)
+std::vector<int> RestParam::fetch(std::vector<bool>& value)
 {
     const char *functionName = "fetch<vector<bool>>";
 
@@ -802,7 +811,7 @@ std::vector<int> RestParam::fetch(std::vector<bool>& value, int timeout)
     return status;
 }
 
-int RestParam::fetch (int & value, int timeout)
+int RestParam::fetch(int & value)
 {
     const char *functionName = "fetch<int>";
     if(mRemote && mType != REST_P_COMMAND)
@@ -855,7 +864,7 @@ int RestParam::fetch (int & value, int timeout)
     return EXIT_SUCCESS;
 }
 
-std::vector<int> RestParam::fetch(std::vector<int>& value, int timeout)
+std::vector<int> RestParam::fetch(std::vector<int>& value)
 {
     const char *functionName = "fetch<vector<int>>";
 
@@ -903,7 +912,7 @@ std::vector<int> RestParam::fetch(std::vector<int>& value, int timeout)
     return status;
 }
 
-int RestParam::fetch (double & value, int timeout)
+int RestParam::fetch(double & value)
 {
     const char *functionName = "fetch<double>";
     if(mRemote && mType != REST_P_COMMAND)
@@ -938,7 +947,7 @@ int RestParam::fetch (double & value, int timeout)
     return EXIT_SUCCESS;
 }
 
-std::vector<int> RestParam::fetch(std::vector<double>& value, int timeout)
+std::vector<int> RestParam::fetch(std::vector<double>& value)
 {
     const char *functionName = "fetch<double>";
 
@@ -971,7 +980,7 @@ std::vector<int> RestParam::fetch(std::vector<double>& value, int timeout)
     return status;
 }
 
-int RestParam::fetch (string & value, int timeout)
+int RestParam::fetch(string & value)
 {
     const char *functionName = "fetch<string>";
 
@@ -1004,7 +1013,7 @@ int RestParam::fetch (string & value, int timeout)
     return EXIT_SUCCESS;
 }
 
-std::vector<int> RestParam::fetch(std::vector<std::string>& value, int timeout)
+std::vector<int> RestParam::fetch(std::vector<std::string>& value)
 {
     const char *functionName = "fetch<vector<string>>";
 
@@ -1089,7 +1098,7 @@ int RestParam::fetch()
     return status;
 }
 
-int RestParam::basePut (const std::string & rawValue, int timeout)
+int RestParam::basePut(const std::string & rawValue, int index)
 {
     const char *functionName = "basePut";
     FLOW_ARGS("'%s'", rawValue.c_str());
@@ -1099,8 +1108,16 @@ int RestParam::basePut (const std::string & rawValue, int timeout)
         return EXIT_FAILURE;
     }
 
-    string reply;
-    if(mSet->getApi()->put(mSubSystem, mName, rawValue, &reply, timeout))
+    std::stringstream endpoint;
+    if (index < 0) {
+        endpoint << mName;
+    }
+    else {
+        endpoint << mName << "/" << index;
+    }
+
+    std::string reply;
+    if(mSet->getApi()->put(mSubSystem, endpoint.str(), rawValue, &reply, mTimeout))
     {
         ERR_ARGS("[param=%s] underlying RestAPI put failed", mAsynName.c_str());
         return EXIT_FAILURE;
@@ -1123,13 +1140,13 @@ int RestParam::basePut (const std::string & rawValue, int timeout)
     return EXIT_SUCCESS;
 }
 
-int RestParam::put (bool value, int timeout)
+int RestParam::put(bool value, int index)
 {
     const char *functionName = "put<bool>";
     FLOW_ARGS("%d", value);
     if(!mRemote)
     {
-        setParam((int)value);
+        setParam((int)value, index);
         return EXIT_SUCCESS;
     }
 
@@ -1147,15 +1164,15 @@ int RestParam::put (bool value, int timeout)
             return EXIT_FAILURE;
 
         // XOR with mReversedEnum
-        status = basePut(toString(value), timeout);
+        status = basePut(toString(value), index);
     }
     else
-        status = basePut(toString(value), timeout);
+        status = basePut(toString(value), index);
 
     if(status)
         return EXIT_FAILURE;
 
-    if(setParam(value))
+    if(setParam(value, index))
     {
         ERR_ARGS("[param=%s] failed to set asyn parameter",
                 mAsynName.c_str());
@@ -1165,7 +1182,7 @@ int RestParam::put (bool value, int timeout)
     return EXIT_SUCCESS;
 }
 
-int RestParam::put (int value, int timeout)
+int RestParam::put(int value, int index)
 {
     const char *functionName = "put<int>";
     int status;
@@ -1197,9 +1214,9 @@ int RestParam::put (int value, int timeout)
             value = 0;
 
         if(mType == REST_P_BOOL)
-            status = basePut(toString((bool)value), timeout);
+            status = basePut(toString((bool)value), index);
         else
-            status = basePut(toString(value), timeout);
+            status = basePut(toString(value), index);
 
         if(status)
         {
@@ -1210,9 +1227,9 @@ int RestParam::put (int value, int timeout)
     }
 
     if(mAsynType == asynParamInt32)
-        status = setParam(value);
+        status = setParam(value, index);
     else
-        status = setParam(mEnumValues[value]);
+        status = setParam(mEnumValues[value], index);
 
     if(status)
     {
@@ -1223,14 +1240,14 @@ int RestParam::put (int value, int timeout)
     return EXIT_SUCCESS;
 }
 
-int RestParam::put (double value, int timeout)
+int RestParam::put(double value, int index)
 {
     const char *functionName = "put<double>";
     FLOW_ARGS("%lf", value);
     if(mEpsilon)
     {
         double currentValue;
-        getParam(currentValue);
+        getParam(currentValue, index);
         if(fabs(currentValue - value) < mEpsilon)
             return EXIT_SUCCESS;
     }
@@ -1257,11 +1274,11 @@ int RestParam::put (double value, int timeout)
             ERR_ARGS("clamped to max %lf", value);
         }
 
-        if(basePut(toString(value), timeout))
+        if(basePut(toString(value)), index)
             return EXIT_FAILURE;
     }
 
-    if(setParam(value))
+    if(setParam(value), index)
     {
         ERR_ARGS("[param=%s] failed to set asyn parameter",
                 mAsynName.c_str());
@@ -1270,13 +1287,13 @@ int RestParam::put (double value, int timeout)
     return EXIT_SUCCESS;
 }
 
-int RestParam::put (string const & value, int timeout)
+int RestParam::put(const std::string& value, int index)
 {
     const char *functionName = "put<string>";
     FLOW_ARGS("%s", value.c_str());
     if(!mRemote)
     {
-        setParam(value);
+        setParam(value, index);
         return EXIT_SUCCESS;
     }
 
@@ -1287,18 +1304,18 @@ int RestParam::put (string const & value, int timeout)
     if(mType != REST_P_STRING && mType != REST_P_ENUM)
         return EXIT_FAILURE;
 
-    size_t index;
-    if(mType == REST_P_ENUM && getEnumIndex(value, index))
+    size_t eIndex;
+    if(mType == REST_P_ENUM && getEnumIndex(value, eIndex))
         return EXIT_FAILURE;
 
-    if(basePut(toString(value), timeout))
+    if(basePut(toString(value)), index)
         return EXIT_FAILURE;
 
     int status;
     if(mAsynType == asynParamInt32)
-        status = setParam((int)index);
+        status = setParam((int)eIndex, index);
     else
-        status = setParam(value);
+        status = setParam(value, index);
 
     if(status)
     {
@@ -1310,9 +1327,9 @@ int RestParam::put (string const & value, int timeout)
     return EXIT_SUCCESS;
 }
 
-int RestParam::put (const char * value, int timeout)
+int RestParam::put(const char * value, int index)
 {
-    return put(string(value), timeout);
+    return put(string(value), index);
 }
 
 RestParamSet::RestParamSet (asynPortDriver *portDriver, RestAPI *api,

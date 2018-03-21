@@ -29,6 +29,7 @@ private:
     rest_min_max_t mMin, mMax;
     std::vector <std::string> mEnumValues, mCriticalValues;
     double mEpsilon;
+    int mTimeout;
     bool mCustomEnum;
     size_t mArraySize;
 
@@ -71,9 +72,9 @@ private:
     int setConnectedStatus(std::vector<int> status);
     int setParamStatus(int status, int address = 0);
 
-    int baseFetch (std::string & rawValue, int timeout = DEFAULT_TIMEOUT);
-    int baseFetch(std::vector<std::string>& rawValue, int timeout = DEFAULT_TIMEOUT);
-    int basePut (std::string const & rawValue, int timeout = DEFAULT_TIMEOUT);
+    int baseFetch (std::string & rawValue);
+    int baseFetch(std::vector<std::string>& rawValue);
+    int basePut (std::string const & rawValue, int index = -1);
 
 public:
     // Asyn type constructor
@@ -86,6 +87,7 @@ public:
 
     void setCommand();
     void setEpsilon (double epsilon);
+    void setTimeout(int timeout);
     int getIndex (void);
     std::string getName();
     void setEnumValues (std::vector<std::string> const & values);
@@ -103,23 +105,23 @@ public:
     // Fetch the current value from the device
     // Update underlying asyn parameter and return the value
     int fetch();
-    int fetch(bool& value,                                  int timeout = DEFAULT_TIMEOUT);
-    std::vector<int> fetch(std::vector<bool>& value,        int timeout = DEFAULT_TIMEOUT);
-    int fetch(int& value,                                   int timeout = DEFAULT_TIMEOUT);
-    std::vector<int> fetch(std::vector<int>& value,         int timeout = DEFAULT_TIMEOUT);
-    int fetch(double& value,                                int timeout = DEFAULT_TIMEOUT);
-    std::vector<int> fetch(std::vector<double>& value,      int timeout = DEFAULT_TIMEOUT);
-    int fetch(std::string & value,                          int timeout = DEFAULT_TIMEOUT);
-    std::vector<int> fetch(std::vector<std::string>& value, int timeout = DEFAULT_TIMEOUT);
+    int fetch(bool& value);
+    std::vector<int> fetch(std::vector<bool>& value);
+    int fetch(int& value);
+    std::vector<int> fetch(std::vector<int>& value);
+    int fetch(double& value);
+    std::vector<int> fetch(std::vector<double>& value);
+    int fetch(std::string & value);
+    std::vector<int> fetch(std::vector<std::string>& value);
 
     // Put the value both to the device (if it is connected to a device
     // parameter) and to the underlying asyn parameter if successful. Update
     // other modified parameters automatically.
-    int put (bool value,                int timeout = DEFAULT_TIMEOUT);
-    int put (int value,                 int timeout = DEFAULT_TIMEOUT);
-    int put (double value,              int timeout = DEFAULT_TIMEOUT);
-    int put (std::string const & value, int timeout = DEFAULT_TIMEOUT);
-    int put (const char *value,         int timeout = DEFAULT_TIMEOUT);
+    int put (bool value,                int index = -1);
+    int put (int value,                 int index = -1);
+    int put (double value,              int index = -1);
+    int put (std::string const & value, int index = -1);
+    int put (const char *value,         int index = -1);
 };
 
 typedef std::map<std::string, RestParam*> rest_param_map_t;
