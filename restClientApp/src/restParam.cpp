@@ -442,6 +442,7 @@ RestParam::RestParam(RestParamSet * set, const std::string& asynName, rest_param
     }
 
     bindAsynParam();
+    setTimeout(DEFAULT_TIMEOUT);
 }
 
 asynStatus RestParam::bindAsynParam()
@@ -1303,21 +1304,25 @@ int RestParam::put(const std::string& value, int index)
         return EXIT_FAILURE;
     }
 
-    if(mType != REST_P_STRING && mType != REST_P_ENUM)
+    if(mType != REST_P_STRING && mType != REST_P_ENUM) {
         return EXIT_FAILURE;
+    }
 
     size_t eIndex;
-    if(mType == REST_P_ENUM && getEnumIndex(value, eIndex))
+    if(mType == REST_P_ENUM && getEnumIndex(value, eIndex)) {
         return EXIT_FAILURE;
+    }
 
-    if(basePut(toString(value)), index)
+    if(basePut(toString(value), index)) {
         return EXIT_FAILURE;
+    }
 
     int status;
-    if(mAsynType == asynParamInt32)
+    if(mAsynType == asynParamInt32) {
         status = setParam((int)eIndex, index);
-    else
+    } else {
         status = setParam(value, index);
+    }
 
     if(status)
     {
