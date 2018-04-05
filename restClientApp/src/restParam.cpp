@@ -870,7 +870,7 @@ std::vector<int> RestParam::fetch(std::vector<int>& value)
 {
     const char *functionName = "fetch<vector<int>>";
 
-    std::vector<int> status(mArraySize, 1);
+    std::vector<int> status(mArraySize, 0);
     if (mRemote && mType != REST_P_COMMAND) {
         std::vector<std::string> rawValue;
         if (baseFetch(rawValue)) {
