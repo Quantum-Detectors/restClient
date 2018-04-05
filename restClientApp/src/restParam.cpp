@@ -1280,11 +1280,12 @@ int RestParam::put(double value, int index)
             ERR_ARGS("clamped to max %lf", value);
         }
 
-        if(basePut(toString(value)), index)
+        if(basePut(toString(value), index)){
             return EXIT_FAILURE;
+        }
     }
 
-    if(setParam(value), index)
+    if(setParam(value, index))
     {
         ERR_ARGS("[param=%s] failed to set asyn parameter",
                 mAsynName.c_str());
