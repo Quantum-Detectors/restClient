@@ -1157,14 +1157,16 @@ int RestParam::put(bool value, int index)
         return EXIT_FAILURE;
     }
 
-    if(mType != REST_P_BOOL && mType != REST_P_ENUM && mType != REST_P_COMMAND)
+    if(mType != REST_P_BOOL && mType != REST_P_ENUM && mType != REST_P_COMMAND){
         return EXIT_FAILURE;
-
+    }
     int status;
     if(mType == REST_P_ENUM)
     {
-        if(mEnumValues.size() != 2)
-            return EXIT_FAILURE;
+        if(mEnumValues.size() != 2){
+          return EXIT_FAILURE;
+
+        }
 
         // XOR with mReversedEnum
         status = basePut(toString(value), index);
@@ -1172,8 +1174,9 @@ int RestParam::put(bool value, int index)
     else
         status = basePut(toString(value), index);
 
-    if(status)
+    if(status){
         return EXIT_FAILURE;
+    }
 
     if(setParam(value, index))
     {
