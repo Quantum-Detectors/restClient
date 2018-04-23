@@ -6,6 +6,7 @@
 #include <map>
 #include <asynPortDriver.h>
 #include <frozen.h>
+#include <stdlib.h>
 
 #include "restDefinitions.h"
 #include "restApi.h"
@@ -114,6 +115,9 @@ public:
     int fetch(std::string & value);
     std::vector<int> fetch(std::vector<std::string>& value);
 
+    // Re-send the current value to the device
+    int push();
+
     // Put the value both to the device (if it is connected to a device
     // parameter) and to the underlying asyn parameter if successful. Update
     // other modified parameters automatically.
@@ -156,6 +160,7 @@ public:
     RestParam *getByIndex (int index);
     asynUser *getUser (void);
     int fetchAll (void);
+    int pushAll (void);
 
     int fetchParams (std::vector<std::string> const & params);
 };

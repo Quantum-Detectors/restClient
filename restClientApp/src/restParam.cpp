@@ -1101,6 +1101,72 @@ int RestParam::fetch()
     return status;
 }
 
+int RestParam::push()
+{
+  int status = 0;
+  bool boolValue;
+  int intValue;
+  double doubleValue;
+  std::string stringValue;
+
+  switch (mType)
+  {
+    case REST_P_BOOL:
+      if (mArraySize){
+        for (size_t index = 0; index < mArraySize; index++){
+          status |= getParam(intValue, index);
+          boolValue = (bool)intValue;
+          status |= this->put(boolValue, index);
+        }
+      } else {
+        status |= getParam(intValue);
+        boolValue = (bool)intValue;
+        status |= this->put(boolValue);
+      }
+      break;
+    case REST_P_UINT: case REST_P_INT: case REST_P_ENUM:
+      if (mArraySize){
+        for (size_t index = 0; index < mArraySize; index++){
+          status |= getParam(intValue, index);
+          status |= this->put(intValue, index);
+        }
+      } else {
+        status |= getParam(intValue);
+        status |= this->put(intValue);
+      }
+      break;
+    case REST_P_DOUBLE:
+      if (mArraySize){
+        for (size_t index = 0; index < mArraySize; index++){
+          status |= getParam(doubleValue, index);
+          status |= this->put(doubleValue, index);
+        }
+      } else {
+        status |= getParam(doubleValue);
+        status |= this->put(doubleValue);
+      }
+      break;
+    case REST_P_STRING:
+      if (mArraySize){
+        printf("**** [1] %s mArraySize: %d\n", this->mName.c_str(), mArraySize);
+        for (size_t index = 0; index < mArraySize; index++){
+          status |= getParam(stringValue, index);
+          status |= this->put(stringValue, index);
+        }
+      } else {
+        printf("**** [2] %s mArraySize: %d\n", this->mName.c_str(), mArraySize);
+        status |= getParam(stringValue);
+        printf("Value obtained from param: %s\n", stringValue.c_str());
+        status |= this->put(stringValue);
+      }
+      break;
+    default:
+      // Do not push anything
+      break;
+  }
+  return status;
+}
+
 int RestParam::basePut(const std::string & rawValue, int index)
 {
     const char *functionName = "basePut";
@@ -1414,6 +1480,17 @@ int RestParamSet::fetchAll (void)
     rest_asyn_map_t::iterator it;
     for(it = mAsynMap.begin(); it != mAsynMap.end(); ++it)
         status |= it->second->fetch();
+
+    return status;
+}
+
+int RestParamSet::pushAll (void)
+{
+    int status = EXIT_SUCCESS;
+
+    rest_asyn_map_t::iterator it;
+    for(it = mAsynMap.begin(); it != mAsynMap.end(); ++it)
+        status |= it->second->push();
 
     return status;
 }
