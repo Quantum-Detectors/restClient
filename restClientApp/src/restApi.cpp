@@ -20,7 +20,7 @@
 #define DATA_HTML               "text/html"
 
 #define MAX_HTTP_RETRIES        1
-#define MAX_MESSAGE_SIZE        512
+#define MAX_MESSAGE_SIZE        2048
 #define MAX_BUF_SIZE            256
 #define MAX_JSON_TOKENS         100
 
