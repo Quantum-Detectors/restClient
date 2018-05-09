@@ -24,6 +24,7 @@ private:
     std::string mSubSystem;
     std::string mName;
     bool mRemote;
+    bool mPushAll;
 
     rest_param_type_t mType;
     rest_access_mode_t mAccessMode;
@@ -114,6 +115,9 @@ public:
     std::vector<int> fetch(std::vector<double>& value);
     int fetch(std::string & value);
     std::vector<int> fetch(std::vector<std::string>& value);
+
+    void disablePushAll();
+    bool canPushAll();
 
     // Re-send the current value to the device
     int push();

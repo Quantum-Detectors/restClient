@@ -50,8 +50,9 @@ vector<string> RestParam::parseArray (struct json_token *tokens,
         if(t->type == JSON_TYPE_ARRAY)
         {
             arrayValues.reserve(t->num_desc);
-            for(int i = 1; i <= t->num_desc; ++i)
+            for(int i = 1; i <= t->num_desc; ++i){
                 arrayValues.push_back(string((t+i)->ptr, (t+i)->len));
+            }
         }
         else if(t->type == JSON_TYPE_STRING)
             arrayValues.push_back(string(t->ptr, t->len));
@@ -386,8 +387,8 @@ RestParam::RestParam(RestParamSet *set, std::string const & asynName, asynParamT
                      std::string subSystem, std::string const & name)
     : mSet(set),
       mAsynName(asynName), mAsynType(asynType), mAsynIndex(-1),
-      mSubSystem(subSystem), mName(name), mRemote(!mName.empty()),
-      mAccessMode(), mMin(), mMax(), mEnumValues(), mCriticalValues(), mEpsilon(0.0),
+      mSubSystem(subSystem), mName(name), mRemote(!mName.empty()), mPushAll(true),
+      mAccessMode(REST_ACC_RW), mMin(), mMax(), mEnumValues(), mCriticalValues(), mEpsilon(0.0),
       mCustomEnum(false)
 {
     const char *functionName = "RestParam<asynType>";
@@ -414,8 +415,8 @@ RestParam::RestParam(RestParamSet * set, const std::string& asynName, rest_param
                      bool strict)
     : mSet(set),
       mAsynName(asynName), mAsynType(asynParamNotDefined), mAsynIndex(-1),
-      mSubSystem(subSystem), mName(name), mRemote(!mName.empty()), mType(restType),
-      mAccessMode(), mMin(), mMax(), mEnumValues(), mCriticalValues(), mEpsilon(0.0),
+      mSubSystem(subSystem), mName(name), mRemote(!mName.empty()), mPushAll(true), mType(restType),
+      mAccessMode(REST_ACC_RW), mMin(), mMax(), mEnumValues(), mCriticalValues(), mEpsilon(0.0),
       mCustomEnum(false), mArraySize(arraySize), mInitialised(false), mStrictInitialisation(strict),
       mConnected(std::vector<bool>(mArraySize, false))
 {
@@ -706,6 +707,14 @@ int RestParam::baseFetch(std::vector<std::string>& rawValue)
         ERR_ARGS("[param=%s] %s\n[%s]", mName.c_str(), msg, buffer.c_str());
         return EXIT_FAILURE;
     }
+    for (int index = 0; (size_t) index != valueArray.size(); ++index) {
+        if (valueArray[index] == "null"){
+          const char *msg = "unable to parse raw value array";
+          ERR_ARGS("[param=%s] %s\n[%s]", mName.c_str(), msg, buffer.c_str());
+          return EXIT_FAILURE;
+        }
+    }
+
 
     rawValue.resize(valueArray.size(), "");
     for (int index = 0; (size_t) index != valueArray.size(); ++index) {
@@ -953,7 +962,7 @@ std::vector<int> RestParam::fetch(std::vector<double>& value)
 {
     const char *functionName = "fetch<double>";
 
-    std::vector<int> status(mArraySize, 1);
+    std::vector<int> status(mArraySize, 0);
     value.resize(mArraySize);
     if(mRemote && mType != REST_P_COMMAND) {
         if(mType != REST_P_DOUBLE && mType != REST_P_UNINIT) {
@@ -968,15 +977,14 @@ std::vector<int> RestParam::fetch(std::vector<double>& value)
         }
 
         for (size_t index = 0; index != rawValue.size(); ++index) {
-            if (parseValue(rawValue[index], value[index])) {
-                return status;
-            }
-
-            status[index] = setParam(value[index], index);
-            if (status[index]) {
+            status[index] = parseValue(rawValue[index], value[index]);
+            if (status[index] == 0){
+              status[index] = setParam(value[index], index);
+              if (status[index]) {
                 ERR_ARGS("[param=%s[%zu]] failed to set asyn parameter", mAsynName.c_str(), index);
+              }
+              FLOW_ARGS("%lf", value[index]);
             }
-            FLOW_ARGS("%lf", value[index]);
         }
     }
     return status;
@@ -1019,7 +1027,7 @@ std::vector<int> RestParam::fetch(std::vector<std::string>& value)
 {
     const char *functionName = "fetch<vector<string>>";
 
-    std::vector<int> status(mArraySize, 1);
+    std::vector<int> status(mArraySize, 0);
     if(mRemote && mType != REST_P_COMMAND) {
         if(mType != REST_P_STRING && mType != REST_P_ENUM && mType != REST_P_UNINIT) {
             return status;
@@ -1170,7 +1178,7 @@ int RestParam::push()
 int RestParam::basePut(const std::string & rawValue, int index)
 {
     const char *functionName = "basePut";
-    FLOW_ARGS("'%s'", rawValue.c_str());
+   FLOW_ARGS("'%s'", rawValue.c_str());
     if(mAccessMode == REST_ACC_RO)
     {
         ERR_ARGS("[param=%s] can't write to read-only parameter", mAsynName.c_str());
@@ -1207,6 +1215,16 @@ int RestParam::basePut(const std::string & rawValue, int index)
         mSet->fetchParams(parseArray(tokens));
     }
     return EXIT_SUCCESS;
+}
+
+void RestParam::disablePushAll()
+{
+  mPushAll = false;
+}
+
+bool RestParam::canPushAll()
+{
+  return mPushAll;
 }
 
 int RestParam::put(bool value, int index)
@@ -1489,9 +1507,11 @@ int RestParamSet::pushAll (void)
     int status = EXIT_SUCCESS;
 
     rest_asyn_map_t::iterator it;
-    for(it = mAsynMap.begin(); it != mAsynMap.end(); ++it)
+    for(it = mAsynMap.begin(); it != mAsynMap.end(); ++it){
+      if (it->second->canPushAll()){
         status |= it->second->push();
-
+      }
+    }
     return status;
 }
 
