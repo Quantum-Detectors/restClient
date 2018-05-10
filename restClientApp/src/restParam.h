@@ -78,6 +78,10 @@ private:
     int baseFetch(std::vector<std::string>& rawValue);
     int basePut (std::string const & rawValue, int index = -1);
 
+    std::vector<std::string> mErrors;
+    void setError(const char* functionName, std::string error, int index = -1);
+    void clearErrors();
+
 public:
     // Asyn type constructor
     RestParam(RestParamSet *set, std::string const & asynName, asynParamType asynType,

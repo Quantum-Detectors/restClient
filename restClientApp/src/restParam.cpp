@@ -9,13 +9,19 @@
 #include <math.h>
 #include "restParam.h"
 
-// Error message formatters
-#define ERR(msg) asynPrint(mSet->getUser(), ASYN_TRACE_ERROR,\
-    "Param[%s]::%s: %s\n", \
-    mAsynName.c_str(), functionName, msg)
+#define ERROR(message) \
+        { \
+            std::stringstream ss; \
+            ss << message; \
+            setError(functionName, ss.str()); \
+        }
 
-#define ERR_ARGS(fmt,...) asynPrint(mSet->getUser(), ASYN_TRACE_ERROR, \
-    "Param[%s]::%s: "fmt"\n", mAsynName.c_str(), functionName, __VA_ARGS__);
+#define ERROR_IDX(message, index) \
+        { \
+            std::stringstream ss; \
+            ss << message; \
+            setError(functionName, ss.str(), index); \
+        }
 
 // Flow message formatters
 #define FLOW(msg) asynPrint(mSet->getUser(), ASYN_TRACE_FLOW, \
@@ -69,7 +75,7 @@ int RestParam::parseType (struct json_token *tokens, rest_param_type_t & type)
     struct json_token *token = find_json_token(tokens, key.c_str());
     if(token == NULL)
     {
-        ERR_ARGS("unable to find '%s' json field", key.c_str());
+        ERROR("Failed to find '" << key.c_str() << "' json field");
         return EXIT_FAILURE;
     }
     string typeStr(token->ptr, token->len);
@@ -95,7 +101,7 @@ int RestParam::parseType (struct json_token *tokens, rest_param_type_t & type)
     case 'e': type = REST_P_ENUM;    break;
     case 'c': type = REST_P_COMMAND; break;
     default:
-        ERR_ARGS("unrecognized value type '%s'", typeStr.c_str());
+        ERROR("Unrecognized value type '" << typeStr.c_str() << "'");
         return EXIT_FAILURE;
     }
     return EXIT_SUCCESS;
@@ -119,7 +125,7 @@ int RestParam::parseAccessMode (struct json_token *tokens,
         accessMode = REST_ACC_RW;
     else
     {
-        ERR_ARGS("invalid access mode '%s", accessModeStr.c_str());
+        ERROR("Invalid access mode '" << accessModeStr.c_str() << "'");
         return EXIT_FAILURE;
     }
 
@@ -138,7 +144,7 @@ int RestParam::parseMinMax (struct json_token *tokens, string const & key,
         struct json_token *type = find_json_token(tokens, mSet->getApi()->PARAM_TYPE.c_str());
         if(!type)
         {
-            ERR("failed to find 'value_type'");
+            ERROR("Failed to find '" << mSet->getApi()->PARAM_TYPE.c_str() << "' json field");
             return EXIT_FAILURE;
         }
 
@@ -147,7 +153,7 @@ int RestParam::parseMinMax (struct json_token *tokens, string const & key,
         {
             if(sscanf(value.c_str(), "%d", &minMax.valInt) != 1)
             {
-                ERR_ARGS("failed to parse '%s' as integer", value.c_str());
+                ERROR("Failed to parse '" << value.c_str() << "' as integer");
                 return EXIT_FAILURE;
             }
         }
@@ -155,7 +161,7 @@ int RestParam::parseMinMax (struct json_token *tokens, string const & key,
         {
             if(sscanf(value.c_str(), "%lf", &minMax.valDouble) != 1)
             {
-                ERR_ARGS("failed to parse '%s' as double", value.c_str());
+                ERROR("Failed to parse '" << value.c_str() << "' as double");
                 return EXIT_FAILURE;
             }
         }
@@ -177,7 +183,7 @@ int RestParam::initialise(struct json_token * tokens)
   }
 
   if (mType == REST_P_UNINIT && parseType(tokens, mType)) {
-    ERR_ARGS("[param=%s] unable to parse parameter type\n", mName.c_str());
+    ERROR("Failed to parse parameter type");
     return EXIT_FAILURE;
   }
 
@@ -186,7 +192,7 @@ int RestParam::initialise(struct json_token * tokens)
       mEnumValues = parseArray(tokens, mSet->getApi()->PARAM_ENUM_VALUES);
       // Confirm that the number of enum elements is non zero (non empty array), else fail
       if (mEnumValues.empty()) {
-        ERR_ARGS("[param=%s] unable to parse enum values\n", mName.c_str());
+        ERROR("Failed to parse enum values");
         return EXIT_FAILURE;
       }
     }
@@ -198,12 +204,12 @@ int RestParam::initialise(struct json_token * tokens)
 
     if(mType == REST_P_INT || mType == REST_P_UINT || mType == REST_P_DOUBLE) {
       if(parseMinMax(tokens, mSet->getApi()->PARAM_MIN, mMin)) {
-        ERR_ARGS("[param=%s] unable to parse min limit\n", mName.c_str());
+        ERROR("Failed to parse min limit");
         return EXIT_FAILURE;
       }
 
       if(parseMinMax(tokens, mSet->getApi()->PARAM_MAX, mMax)) {
-        ERR_ARGS("[param=%s] unable to parse max limit\n", mName.c_str());
+        ERROR("Failed to parse max limit");
         return EXIT_FAILURE;
       }
     }
@@ -227,7 +233,7 @@ int RestParam::parseValue (struct json_token *tokens, string & rawValue)
     struct json_token *token = find_json_token(tokens, key.c_str());
     if(token == NULL)
     {
-        ERR_ARGS("unable to find '%s' json field", key.c_str());
+        ERROR("Failed to find '" << key.c_str() << "' json field");
         return EXIT_FAILURE;
     }
     rawValue = string(token->ptr, token->len);
@@ -244,7 +250,7 @@ int RestParam::parseValue (string const & rawValue, bool & value)
         value = false;
     else
     {
-        ERR_ARGS("couldn't parse value '%s' as boolean", rawValue.c_str());
+        ERROR("Failed to parse value '" << rawValue.c_str() << "' as boolean");
         return EXIT_FAILURE;
     }
     return EXIT_SUCCESS;
@@ -256,7 +262,7 @@ int RestParam::parseValue (string const & rawValue, int & value)
 
     if(sscanf(rawValue.c_str(), "%d", &value) != 1)
     {
-        ERR_ARGS("couldn't parse value '%s' as integer", rawValue.c_str());
+        ERROR("Failed to parse value '" << rawValue.c_str() << "' as integer");
         return EXIT_FAILURE;
     }
     return EXIT_SUCCESS;
@@ -268,7 +274,7 @@ int RestParam::parseValue (string const & rawValue, double & value)
 
     if(sscanf(rawValue.c_str(), "%lf", &value) != 1)
     {
-        ERR_ARGS("couldn't parse value '%s' as double", rawValue.c_str());
+        ERROR("Failed to parse value '" << rawValue.c_str() << "' as double");
         return EXIT_FAILURE;
     }
     return EXIT_SUCCESS;
@@ -313,8 +319,7 @@ int RestParam::getEnumIndex (std::string const & value, size_t & index)
         if(mEnumValues[index] == value)
             return EXIT_SUCCESS;
 
-    ERR_ARGS("[param=%s] can't find index of value %s", mAsynName.c_str(),
-            value.c_str());
+    ERROR("Failed to find index of value " << value.c_str());
     return EXIT_FAILURE;
 }
 
@@ -401,7 +406,7 @@ RestParam::RestParam(RestParamSet *set, std::string const & asynName, asynParamT
         case asynParamFloat64: mType = REST_P_DOUBLE; break;
         case asynParamOctet:   mType = REST_P_STRING; break;
         default:
-            ERR_ARGS("[param=%s] invalid asyn type %d", mAsynName.c_str(), (int)asynType);
+            ERROR("Invalid asyn type " << (int) asynType);
             throw std::runtime_error(mAsynName);
         }
     }
@@ -438,7 +443,7 @@ RestParam::RestParam(RestParamSet * set, const std::string& asynName, rest_param
             mAsynType = asynParamOctet;
             break;
         default:  // Includes REST_P_UNINIT
-            ERR_ARGS("[param=%s] invalid REST type %d", mAsynName.c_str(), (int)restType);
+            ERROR("Invalid REST type " << (int) restType);
             throw std::runtime_error(mAsynName);
     }
 
@@ -473,15 +478,14 @@ asynStatus RestParam::bindAsynParam()
           }
         }
         if(status) {
-            ERR_ARGS("[param=%s] failed to create param", mAsynName.c_str());
+            ERROR("Failed to create param");
             throw std::runtime_error(mAsynName);
         }
     }
     else {
         RestParam* param = mSet->getByIndex(mAsynIndex);
         if (param != NULL) {
-            ERR_ARGS("[param=%s] param is already bound to %s",
-                     mAsynName.c_str(), param->mName.c_str());
+            ERROR("Asyn param " << mAsynName << "is already bound to " << param->mName);
             throw std::runtime_error(mAsynName);
         }
         else {
@@ -628,7 +632,7 @@ int RestParam::baseFetch(string & rawValue)
     const char *functionName = "baseFetch";
     if(!mRemote)
     {
-        ERR_ARGS("[param=%s] can't fetch local parameter", mAsynName.c_str());
+        ERROR("Can't fetch local parameter");
         return EXIT_FAILURE;
     }
 
@@ -643,23 +647,20 @@ int RestParam::baseFetch(string & rawValue)
     int err = parse_json(buffer.c_str(), buffer.size(), tokens, MAX_JSON_TOKENS);
     if(err < 0)
     {
-        const char *msg = "unable to parse json response";
-        ERR_ARGS("[param=%s] %s\n[%s]", mName.c_str(), msg, buffer.c_str());
+        ERROR("Failed to parse json response:\n'" << buffer << "'");
         return EXIT_FAILURE;
     }
 
     if (!mInitialised) {
         if (initialise(tokens)) {
-            const char *msg = "unable to initialise param from response";
-            ERR_ARGS("[param=%s] %s\n[%s]", mName.c_str(), msg, buffer.c_str());
+            ERROR("Failed to initialise param from response:\n'" << buffer << "'");
             return EXIT_FAILURE;
         }
     }
 
     if(parseValue(tokens, rawValue))
     {
-        const char *msg = "unable to parse raw value";
-        ERR_ARGS("[param=%s] %s\n[%s]", mName.c_str(), msg, buffer.c_str());
+        ERROR("Failed to parse raw value from response:\n'" << buffer << "'");
         return EXIT_FAILURE;
     }
 
@@ -672,7 +673,7 @@ int RestParam::baseFetch(std::vector<std::string>& rawValue)
     const char *functionName = "baseFetch<vector>";
     if(!mRemote)
     {
-        ERR_ARGS("[param=%s] can't fetch local parameter", mAsynName.c_str());
+        ERROR("Can't fetch local parameter");
         return EXIT_FAILURE;
     }
 
@@ -687,15 +688,13 @@ int RestParam::baseFetch(std::vector<std::string>& rawValue)
     int err = parse_json(buffer.c_str(), buffer.size(), tokens, MAX_JSON_TOKENS);
     if(err < 0)
     {
-        const char *msg = "unable to parse json response";
-        ERR_ARGS("[param=%s] %s\n[%s]", mName.c_str(), msg, buffer.c_str());
+        ERROR("Unable to parse json response\n'" << buffer << "'");
         return EXIT_FAILURE;
     }
 
     if (!mInitialised) {
         if (initialise(tokens)) {
-            const char *msg = "unable to initialise param from response";
-            ERR_ARGS("[param=%s] %s\n[%s]", mName.c_str(), msg, buffer.c_str());
+            ERROR("Failed to initialise param from response:\n'" << buffer << "'");
             return EXIT_FAILURE;
         }
     }
@@ -703,18 +702,15 @@ int RestParam::baseFetch(std::vector<std::string>& rawValue)
     std::vector<std::string> valueArray = parseArray(tokens, mSet->getApi()->PARAM_VALUE);
     if(valueArray.empty())
     {
-        const char *msg = "unable to parse raw value array";
-        ERR_ARGS("[param=%s] %s\n[%s]", mName.c_str(), msg, buffer.c_str());
+        ERROR("Failed to parse raw value array from response:\n'" << buffer << "'");
         return EXIT_FAILURE;
     }
     for (int index = 0; (size_t) index != valueArray.size(); ++index) {
-        if (valueArray[index] == "null"){
-          const char *msg = "unable to parse raw value array";
-          ERR_ARGS("[param=%s] %s\n[%s]", mName.c_str(), msg, buffer.c_str());
-          return EXIT_FAILURE;
+        if (valueArray[index] == "null") {
+            ERROR("Failed to parse raw value from array:\n'" << buffer << "'");
+            return EXIT_FAILURE;
         }
     }
-
 
     rawValue.resize(valueArray.size(), "");
     for (int index = 0; (size_t) index != valueArray.size(); ++index) {
@@ -732,8 +728,7 @@ int RestParam::fetch(bool & value)
         string rawValue;
         if(baseFetch(rawValue))
         {
-            ERR_ARGS("[param=%s] underlying baseFetch failed",
-                    mAsynName.c_str());
+            ERROR("Underlying baseFetch failed");
             return EXIT_FAILURE;
 
         }
@@ -746,8 +741,7 @@ int RestParam::fetch(bool & value)
         {
             if(mEnumValues.size() != 2)
             {
-                ERR_ARGS("[param=%s] can't fetch non-binary enum as bool\n",
-                        mAsynName.c_str());
+                ERROR("Can't fetch non-binary enum as bool");
                 return EXIT_FAILURE;
             }
 
@@ -758,15 +752,13 @@ int RestParam::fetch(bool & value)
             value = (bool) index;
             if(setParam((int) index))
             {
-                ERR_ARGS("[param=%s] failed to set asyn parameter",
-                        mAsynName.c_str());
+                ERROR("Failed to set asyn parameter");
                 return EXIT_FAILURE;
             }
         }
         else
         {
-            ERR_ARGS("[param=%s] unexpected type %d", mAsynName.c_str(),
-                    mType);
+            ERROR("Unexpected type for boolean param: " << mType);
             return EXIT_FAILURE;
         }
     }
@@ -783,7 +775,7 @@ std::vector<int> RestParam::fetch(std::vector<bool>& value)
     if(mRemote && mType != REST_P_COMMAND) {
         std::vector<std::string> rawValue;
         if (baseFetch(rawValue)) {
-            ERR_ARGS("[param=%s] underlying baseFetch failed", mAsynName.c_str());
+            ERROR("Underlying baseFetch failed");
             return status;
         }
 
@@ -798,7 +790,7 @@ std::vector<int> RestParam::fetch(std::vector<bool>& value)
             }
             else if(mType == REST_P_ENUM) {
                 if(mEnumValues.size() != 2) {
-                    ERR_ARGS("[param=%s] can't fetch non-binary enum as bool\n", mAsynName.c_str());
+                    ERROR("Can't fetch non-binary enum as bool");
                     return status;
                 }
 
@@ -809,11 +801,11 @@ std::vector<int> RestParam::fetch(std::vector<bool>& value)
                 value[index] = (bool) eIndex;
                 status[index] = setParam((int) eIndex, index);
                 if (status[index]) {
-                    ERR_ARGS("[param=%s] failed to set asyn parameter", mAsynName.c_str());
+                    ERROR("Failed to set asyn parameter");
                 }
             }
             else {
-                ERR_ARGS("[param=%s] unexpected type %d", mAsynName.c_str(), mType);
+                ERROR("Unexpected type for boolean param: " << mType);
                 return status;
             }
             FLOW_ARGS("%d", (bool) value[index]);
@@ -830,8 +822,7 @@ int RestParam::fetch(int & value)
         string rawValue;
         if(baseFetch(rawValue))
         {
-            ERR_ARGS("[param=%s] underlying baseFetch failed",
-                    mAsynName.c_str());
+            ERROR("Underlying baseFetch failed");
             return EXIT_FAILURE;
 
         }
@@ -858,15 +849,13 @@ int RestParam::fetch(int & value)
         }
         else
         {
-            ERR_ARGS("[param=%s] unexpected type %d", mAsynName.c_str(),
-                    mType);
+            ERROR("Unexpected type for int param: " << mType);
             return EXIT_FAILURE;
         }
 
         if(setParam(value))
         {
-            ERR_ARGS("[param=%s] failed to set asyn parameter",
-                    mAsynName.c_str());
+            ERROR("Failed to set asyn parameter");
             return EXIT_FAILURE;
         }
     }
@@ -879,11 +868,11 @@ std::vector<int> RestParam::fetch(std::vector<int>& value)
 {
     const char *functionName = "fetch<vector<int>>";
 
-    std::vector<int> status(mArraySize, 0);
+    std::vector<int> status(mArraySize, 1);
     if (mRemote && mType != REST_P_COMMAND) {
         std::vector<std::string> rawValue;
         if (baseFetch(rawValue)) {
-            ERR_ARGS("[param=%s] underlying baseFetch failed", mAsynName.c_str());
+            ERROR("Underlying baseFetch failed");
             return status;
         }
 
@@ -909,13 +898,13 @@ std::vector<int> RestParam::fetch(std::vector<int>& value)
                     return status;
             }
             else {
-                ERR_ARGS("[param=%s[%d]] unexpected type %d", mAsynName.c_str(), index, mType);
+                ERROR_IDX("Unexpected type for int param " << mType, index);
                 return status;
             }
 
             status[index] = setParam(value[index], index);
             if (status[index]) {
-                ERR_ARGS("[param=%s[%d]] failed to set asyn parameter", mAsynName.c_str(), index);
+                ERROR_IDX("Failed to set asyn parameter", index);
             }
             FLOW_ARGS("%d", value[index]);
         }
@@ -930,16 +919,14 @@ int RestParam::fetch(double & value)
     {
         if(mType != REST_P_DOUBLE && mType != REST_P_UNINIT)
         {
-            ERR_ARGS("[param=%s] unexpected type %d", mAsynName.c_str(),
-                    mType);
+            ERROR("Unexpected type for double param: " << mType);
             return EXIT_FAILURE;
         }
 
         string rawValue;
         if(baseFetch(rawValue))
         {
-            ERR_ARGS("[param=%s] underlying baseFetch failed",
-                    mAsynName.c_str());
+            ERROR("Underlying baseFetch failed");
             return EXIT_FAILURE;
         }
 
@@ -948,8 +935,7 @@ int RestParam::fetch(double & value)
 
         if(setParam(value))
         {
-            ERR_ARGS("[param=%s] failed to set asyn parameter",
-                    mAsynName.c_str());
+            ERROR("Failed to set asyn parameter");
             return EXIT_FAILURE;
         }
     }
@@ -962,26 +948,26 @@ std::vector<int> RestParam::fetch(std::vector<double>& value)
 {
     const char *functionName = "fetch<double>";
 
-    std::vector<int> status(mArraySize, 0);
+    std::vector<int> status(mArraySize, 1);
     value.resize(mArraySize);
     if(mRemote && mType != REST_P_COMMAND) {
         if(mType != REST_P_DOUBLE && mType != REST_P_UNINIT) {
-            ERR_ARGS("[param=%s] unexpected type %d", mAsynName.c_str(), mType);
+            ERROR("Unexpected type for double param: " << mType);
             return status;
         }
 
         std::vector<std::string> rawValue;
         if(baseFetch(rawValue)) {
-            ERR_ARGS("[param=%s] underlying baseFetch failed", mAsynName.c_str());
+            ERROR("Underlying baseFetch failed");
             return status;
         }
 
         for (size_t index = 0; index != rawValue.size(); ++index) {
             status[index] = parseValue(rawValue[index], value[index]);
             if (status[index] == 0){
-              status[index] = setParam(value[index], index);
+              status[index] = setParam(value[index], (int) index);
               if (status[index]) {
-                ERR_ARGS("[param=%s[%zu]] failed to set asyn parameter", mAsynName.c_str(), index);
+                ERROR_IDX("Failed to set asyn parameter", (int) index);
               }
               FLOW_ARGS("%lf", value[index]);
             }
@@ -1002,8 +988,7 @@ int RestParam::fetch(string & value)
 
         if(baseFetch(value))
         {
-            ERR_ARGS("[param=%s] underlying baseFetch failed",
-                    mAsynName.c_str());
+            ERROR("Underlying baseFetch failed");
             return EXIT_FAILURE;
 
         }
@@ -1012,8 +997,7 @@ int RestParam::fetch(string & value)
 
         if(setParam(value))
         {
-            ERR_ARGS("[param=%s] failed to set asyn parameter",
-                    mAsynName.c_str());
+            ERROR("Failed to set asyn parameter");
             return EXIT_FAILURE;
         }
         return EXIT_SUCCESS;
@@ -1027,21 +1011,21 @@ std::vector<int> RestParam::fetch(std::vector<std::string>& value)
 {
     const char *functionName = "fetch<vector<string>>";
 
-    std::vector<int> status(mArraySize, 0);
+    std::vector<int> status(mArraySize, 1);
     if(mRemote && mType != REST_P_COMMAND) {
         if(mType != REST_P_STRING && mType != REST_P_ENUM && mType != REST_P_UNINIT) {
             return status;
         }
 
         if(baseFetch(value)) {
-            ERR_ARGS("[param=%s] underlying baseFetch failed", mAsynName.c_str());
+            ERROR("Underlying baseFetch failed");
             return status;
         }
 
         for (size_t index = 0; index != value.size(); ++index) {
             status[index] = setParam(value[index], (int) index);
             if (status[index]) {
-                ERR_ARGS("[param=%s[%zu] failed to set asyn parameter", mAsynName.c_str(), index);
+                ERROR_IDX("Failed to set asyn parameter", (int) index);
             }
             FLOW_ARGS("%s", value[index].c_str());
         }
@@ -1106,6 +1090,9 @@ int RestParam::fetch()
         }
         status |= setConnectedStatus(status);
     }
+    if (status == 0) {
+        clearErrors();
+    }
     return status;
 }
 
@@ -1156,15 +1143,12 @@ int RestParam::push()
       break;
     case REST_P_STRING:
       if (mArraySize){
-        printf("**** [1] %s mArraySize: %d\n", this->mName.c_str(), mArraySize);
         for (size_t index = 0; index < mArraySize; index++){
           status |= getParam(stringValue, index);
           status |= this->put(stringValue, index);
         }
       } else {
-        printf("**** [2] %s mArraySize: %d\n", this->mName.c_str(), mArraySize);
         status |= getParam(stringValue);
-        printf("Value obtained from param: %s\n", stringValue.c_str());
         status |= this->put(stringValue);
       }
       break;
@@ -1181,7 +1165,7 @@ int RestParam::basePut(const std::string & rawValue, int index)
    FLOW_ARGS("'%s'", rawValue.c_str());
     if(mAccessMode == REST_ACC_RO)
     {
-        ERR_ARGS("[param=%s] can't write to read-only parameter", mAsynName.c_str());
+        ERROR_IDX("Can't write to read-only parameter", index);
         return EXIT_FAILURE;
     }
 
@@ -1196,7 +1180,7 @@ int RestParam::basePut(const std::string & rawValue, int index)
     std::string reply;
     if(mSet->getApi()->put(mSubSystem, endpoint.str(), rawValue, &reply, mTimeout))
     {
-        ERR_ARGS("[param=%s] underlying RestAPI put failed", mAsynName.c_str());
+        ERROR_IDX("Underlying RestAPI put failed", index);
         return EXIT_FAILURE;
     }
 
@@ -1207,8 +1191,7 @@ int RestParam::basePut(const std::string & rawValue, int index)
         int err = parse_json(reply.c_str(), reply.size(), tokens, MAX_JSON_TOKENS);
         if(err < 0)
         {
-            const char *msg = "unable to parse json response";
-            ERR_ARGS("[param=%s] %s\n[%s]", mName.c_str(), msg, reply.c_str());
+            ERROR("Unable to parse json response\n'" << reply << "'");
             return EXIT_FAILURE;
         }
 
@@ -1264,8 +1247,7 @@ int RestParam::put(bool value, int index)
 
     if(setParam(value, index))
     {
-        ERR_ARGS("[param=%s] failed to set asyn parameter",
-                mAsynName.c_str());
+        ERROR_IDX("Failed to set asyn parameter", index);
         return EXIT_FAILURE;
     }
 
@@ -1287,8 +1269,7 @@ int RestParam::put(int value, int index)
            mType != REST_P_UINT && mType != REST_P_ENUM &&
            mType != REST_P_COMMAND)
         {
-            ERR_ARGS("[param=%s] expected bool, int, uint or enum",
-                    mAsynName.c_str());
+            ERROR("Unexpected type for int param " << mType);
             return EXIT_FAILURE;
         }
 
@@ -1310,8 +1291,7 @@ int RestParam::put(int value, int index)
 
         if(status)
         {
-            ERR_ARGS("[param=%s] underlying basePut failed",
-                    mAsynName.c_str());
+            ERROR_IDX("Underlying basePut failed", index);
             return EXIT_FAILURE;
         }
     }
@@ -1323,8 +1303,7 @@ int RestParam::put(int value, int index)
 
     if(status)
     {
-        ERR_ARGS("[param=%s] failed to set asyn parameter",
-                mAsynName.c_str());
+        ERROR_IDX("Failed to set asyn parameter", index);
         return EXIT_FAILURE;
     }
     return EXIT_SUCCESS;
@@ -1355,13 +1334,13 @@ int RestParam::put(double value, int index)
         if(mMin.exists && (value < mMin.valDouble))
         {
             value = mMin.valDouble;
-            ERR_ARGS("clamped to min %lf", value);
+            ERROR_IDX("PUT value clamped to minimum: " << value, index);
         }
 
         if(mMax.exists && (value > mMax.valDouble))
         {
             value = mMax.valDouble;
-            ERR_ARGS("clamped to max %lf", value);
+            ERROR_IDX("PUT value clamped to maximum: " << value, index);
         }
 
         if(basePut(toString(value), index)){
@@ -1371,8 +1350,7 @@ int RestParam::put(double value, int index)
 
     if(setParam(value, index))
     {
-        ERR_ARGS("[param=%s] failed to set asyn parameter",
-                mAsynName.c_str());
+        ERROR_IDX("Failed to set asyn parameter", index);
         return EXIT_FAILURE;
     }
     return EXIT_SUCCESS;
@@ -1414,8 +1392,7 @@ int RestParam::put(const std::string& value, int index)
 
     if(status)
     {
-        ERR_ARGS("[param=%s] failed to set asyn parameter",
-                mAsynName.c_str());
+        ERROR_IDX("Failed to set asyn parameter", index);
         return EXIT_FAILURE;
     }
 
@@ -1426,6 +1403,29 @@ int RestParam::put(const char * value, int index)
 {
     return put(string(value), index);
 }
+
+void RestParam::setError(const char* functionName, std::string error, int index)
+{
+    std::stringstream indexSS;
+    if (index >= 0) {
+        indexSS << "[" << index << "]";
+    }
+    std::stringstream errorMessage;
+    errorMessage << "RestParam[" << mAsynName << " -> " << mName << indexSS.str() << "]::"
+                 << functionName << ": " << error << "\n";
+
+    if (std::find(mErrors.begin(), mErrors.end(), errorMessage.str()) == mErrors.end()) {
+        // If we reach the end without finding the error we add it and print it once
+        mErrors.push_back(errorMessage.str());
+        asynPrint(mSet->getUser(), ASYN_TRACE_ERROR, errorMessage.str().c_str());
+    }
+}
+
+void RestParam::clearErrors()
+{
+    mErrors.clear();
+}
+
 
 RestParamSet::RestParamSet (asynPortDriver *portDriver, RestAPI *api,
         asynUser *user)
