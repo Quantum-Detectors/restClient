@@ -26,11 +26,12 @@
 
 #define DEFAULT_TIMEOUT_CONNECT 1
 
-#define ERR_PREFIX  "RestApi"
-#define ERR(msg) fprintf(stderr, ERR_PREFIX "::%s: %s\n", functionName, msg)
-
-#define ERR_ARGS(fmt,...) fprintf(stderr, ERR_PREFIX "::%s: " fmt "\n", \
-    functionName, __VA_ARGS__)
+#define ERROR(message) \
+        { \
+            std::stringstream ss; \
+            ss << message; \
+            setError(functionName, ss.str()); \
+        }
 
 // Requests
 
@@ -60,9 +61,9 @@ using std::string;
 
 RestAPI::RestAPI (string const & hostname, int port, size_t numSockets) :
     mHostname(hostname), mPort(port), mNumSockets(numSockets),
-    mSockets(new socket_t[numSockets])
+    mSockets(new socket_t[numSockets]), mErrorFilter(new ErrorFilter())
 {
-    memset(&mAddress, 0, sizeof(mAddress));
+      memset(&mAddress, 0, sizeof(mAddress));
 
     if(hostToIPAddr(mHostname.c_str(), &mAddress.sin_addr))
         throw std::runtime_error("invalid hostname");
@@ -102,7 +103,7 @@ int RestAPI::connect (socket_t *s)
 
     if(s->fd == INVALID_SOCKET)
     {
-        ERR("couldn't create socket");
+        ERROR("Couldn't create socket");
         return EXIT_FAILURE;
     }
 
@@ -115,7 +116,8 @@ int RestAPI::connect (socket_t *s)
         {
             char error[MAX_BUF_SIZE];
             epicsSocketConvertErrnoToString(error, sizeof(error));
-            ERR_ARGS("Failed to connect to %s:%d [%s]", mHostname.c_str(), mPort, error);
+            ERROR("Failed to connect to " << mHostname.c_str() << ":" << mPort <<
+                  " [" << error << "]");
             epicsSocketDestroy(s->fd);
             return EXIT_FAILURE;
         }
@@ -136,17 +138,18 @@ int RestAPI::connect (socket_t *s)
             // Check if the select call failed / timed out
             if(ret <= 0) {
                 const char* error = ret == 0 ? "TIMEOUT" : "select() failed";
-                ERR_ARGS("Failed to connect to %s:%d [%s]", mHostname.c_str(), mPort, error);
+                ERROR("Failed to connect to " << mHostname.c_str() << ":" << mPort <<
+                      " [" << error << "]");
                 epicsSocketDestroy(s->fd);
                 return EXIT_FAILURE;
             }
             // Socket changed state - check if we are now connected
             else if(::connect(s->fd, (struct sockaddr*)&mAddress, sizeof(mAddress)) < 0) {
                 // Still not connected; socket state changed straight to `Failed`
-                sleep(DEFAULT_TIMEOUT_CONNECT); // Force a delay before trying again
                 char error[MAX_BUF_SIZE];
                 epicsSocketConvertErrnoToString(error, sizeof(error));
-                ERR_ARGS("Failed to connect to %s:%d [%s]", mHostname.c_str(), mPort, error);
+                ERROR("Failed to connect to " << mHostname.c_str() << ":" << mPort <<
+                      " [" << error << "]");
                 epicsSocketDestroy(s->fd);
                 return EXIT_FAILURE;
             }
@@ -190,7 +193,7 @@ int RestAPI::doRequest (const request_t *request, response_t *response, int time
 
     if(!gotSocket)
     {
-        ERR("No available socket");
+        ERROR("No available socket");
         status = EXIT_FAILURE;
         goto end;
     }
@@ -199,7 +202,7 @@ int RestAPI::doRequest (const request_t *request, response_t *response, int time
     {
         if(connect(s))
         {
-            ERR("Failed to reconnect socket");
+            ERROR("Failed to reconnect socket");
             status = EXIT_FAILURE;
             goto end;
         }
@@ -217,7 +220,7 @@ int RestAPI::doRequest (const request_t *request, response_t *response, int time
       // nothing to flush.  Any other error code needs to be dealt
       // with by closing the socket
       if (errcode != EWOULDBLOCK){
-        ERR("Failed to flush");
+        ERROR("Failed to flush");
         epicsSocketDestroy(s->fd);
         s->closed = true;
         status = EXIT_FAILURE;
@@ -232,7 +235,7 @@ int RestAPI::doRequest (const request_t *request, response_t *response, int time
             goto retry;
         else
         {
-            ERR("Failed to send");
+            ERROR("Failed to send");
             epicsSocketDestroy(s->fd);
             s->closed = true;
             status = EXIT_FAILURE;
@@ -252,7 +255,8 @@ int RestAPI::doRequest (const request_t *request, response_t *response, int time
     ret = select(s->fd+1, &fds, NULL, NULL, pRecvTimeout);
     if(ret <= 0)
     {
-        ERR(ret ? "select() failed" : "Timed out");
+        std::string error = ret ? "select() failed" : "Timed out";
+        ERROR(error);
         status = EXIT_FAILURE;
         goto end;
     }
@@ -263,7 +267,7 @@ int RestAPI::doRequest (const request_t *request, response_t *response, int time
             goto retry;
         else
         {
-            ERR("Failed to recv");
+            ERROR("Failed to recv");
             status = EXIT_FAILURE;
             goto end;
         }
@@ -273,7 +277,7 @@ int RestAPI::doRequest (const request_t *request, response_t *response, int time
 
     if((status = parseHeader(response)))
     {
-        ERR("Failed to parseHeader");
+        ERROR("Failed to parseHeader");
         goto end;
     }
 
@@ -282,6 +286,10 @@ int RestAPI::doRequest (const request_t *request, response_t *response, int time
         close(s->fd);
         s->closed = true;
     }
+
+    // We successfully completed a request, so connection to server must be OK
+    // Clear any errors so they are printed again if the reoccur
+    mErrorFilter->clearErrors();
 
 end:
     s->retries = 0;
@@ -441,4 +449,14 @@ int RestAPI::basePut(std::string subSystem, const std::string & param,
   if(reply)
     *reply = string(response.content, response.contentLength);
   return EXIT_SUCCESS;
+}
+
+void RestAPI::setError(const char* functionName, std::string error)
+{
+  std::stringstream errorMessage;
+  errorMessage << "RestAPI::" << functionName << ": " << error << "\n";
+
+  if (mErrorFilter->newError(errorMessage.str())) {
+    fprintf(stderr, errorMessage.str().c_str());
+  }
 }

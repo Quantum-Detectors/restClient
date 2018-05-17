@@ -10,6 +10,7 @@
 
 #include "restDefinitions.h"
 #include "restApi.h"
+#include "errorFilter.h"
 
 class RestParamSet;
 
@@ -17,6 +18,7 @@ class RestParam
 {
 
 private:
+    ErrorFilter* mErrorFilter;
     RestParamSet *mSet;
     std::string mAsynName;
     asynParamType mAsynType;
@@ -78,9 +80,7 @@ private:
     int baseFetch(std::vector<std::string>& rawValue);
     int basePut (std::string const & rawValue, int index = -1);
 
-    std::vector<std::string> mErrors;
     void setError(const char* functionName, std::string error, int index = -1);
-    void clearErrors();
 
 public:
     // Asyn type constructor

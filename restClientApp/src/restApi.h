@@ -6,6 +6,7 @@
 #include <osiSock.h>
 
 #include "restDefinitions.h"
+#include "errorFilter.h"
 
 #define DEFAULT_TIMEOUT     20      // seconds
 
@@ -34,7 +35,7 @@ typedef struct response
   int code;
 } response_t;
 
-class RestAPI
+class RestAPI : ErrorFilter
 {
 protected:
     std::string mHostname;
@@ -78,5 +79,8 @@ public:
   int basePut(std::string subSystem, std::string const & param,
               char * valueBuf, int valueLen,
               std::string * reply = NULL, int timeout = DEFAULT_TIMEOUT);
+
+  ErrorFilter* mErrorFilter;
+  void setError(const char* functionName, std::string error);
 };
 #endif

@@ -11,11 +11,13 @@ CXXFLAGS += -O0
 
 LIB_SRCS += restApi.cpp
 LIB_SRCS += restParam.cpp
+LIB_SRCS += errorFilter.cpp
 LIB_SRCS += jsonDict.cpp
 
 INC += restDefinitions.h
 INC += restApi.h
 INC += restParam.h
+INC += errorFilter.h
 INC += jsonDict.h
 
 LIB_LIBS += asyn

@@ -390,7 +390,7 @@ int RestParam::setConnectedStatus(std::vector<int> status)
 
 RestParam::RestParam(RestParamSet *set, std::string const & asynName, asynParamType asynType,
                      std::string subSystem, std::string const & name)
-    : mSet(set),
+    : mErrorFilter(new ErrorFilter()), mSet(set),
       mAsynName(asynName), mAsynType(asynType), mAsynIndex(-1),
       mSubSystem(subSystem), mName(name), mRemote(!mName.empty()), mPushAll(true),
       mAccessMode(REST_ACC_RW), mMin(), mMax(), mEnumValues(), mCriticalValues(), mEpsilon(0.0),
@@ -418,7 +418,7 @@ RestParam::RestParam(RestParamSet *set, std::string const & asynName, asynParamT
 RestParam::RestParam(RestParamSet * set, const std::string& asynName, rest_param_type_t restType,
                      const std::string& subSystem, const std::string& name, size_t arraySize,
                      bool strict)
-    : mSet(set),
+    : mErrorFilter(new ErrorFilter()), mSet(set),
       mAsynName(asynName), mAsynType(asynParamNotDefined), mAsynIndex(-1),
       mSubSystem(subSystem), mName(name), mRemote(!mName.empty()), mPushAll(true), mType(restType),
       mAccessMode(REST_ACC_RW), mMin(), mMax(), mEnumValues(), mCriticalValues(), mEpsilon(0.0),
@@ -1091,7 +1091,7 @@ int RestParam::fetch()
         status |= setConnectedStatus(status);
     }
     if (status == 0) {
-        clearErrors();
+        mErrorFilter->clearErrors();
     }
     return status;
 }
@@ -1414,16 +1414,9 @@ void RestParam::setError(const char* functionName, std::string error, int index)
     errorMessage << "RestParam[" << mAsynName << " -> " << mName << indexSS.str() << "]::"
                  << functionName << ": " << error << "\n";
 
-    if (std::find(mErrors.begin(), mErrors.end(), errorMessage.str()) == mErrors.end()) {
-        // If we reach the end without finding the error we add it and print it once
-        mErrors.push_back(errorMessage.str());
+    if (mErrorFilter->newError(errorMessage.str())) {
         asynPrint(mSet->getUser(), ASYN_TRACE_ERROR, errorMessage.str().c_str());
     }
-}
-
-void RestParam::clearErrors()
-{
-    mErrors.clear();
 }
 
 
