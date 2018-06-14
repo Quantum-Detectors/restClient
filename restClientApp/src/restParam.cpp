@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <numeric>
 #include <sstream>
+#include <iomanip>
+#include <limits>
 
 #include <frozen.h>
 #include <math.h>
@@ -301,7 +303,7 @@ std::string RestParam::toString (int value)
 std::string RestParam::toString (double value)
 {
     std::ostringstream os;
-    os << value;
+    os << std::setprecision(std::numeric_limits<long double>::digits10 + 2) << value;
     return os.str();
 }
 
