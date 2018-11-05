@@ -1035,65 +1035,56 @@ std::vector<int> RestParam::fetch(std::vector<std::string>& value)
 
 int RestParam::fetch()
 {
-    int status = 0;
+  int status = 0;
+  if (mAccessMode != REST_ACC_WO) {
     if (mArraySize) {
-        std::vector<int> fetch_status;
-        switch(mAsynType)
-        {
-            case asynParamInt32:
-            {
-                std::vector<int> dummy;
-                fetch_status = fetch(dummy);
-                break;
-            }
-            case asynParamFloat64:
-            {
-                std::vector<double> dummy;
-                fetch_status = fetch(dummy);
-                break;
-            }
-            case asynParamOctet:
-            {
-                std::vector<std::string> dummy;
-                fetch_status = fetch(dummy);
-                break;
-            }
-            default:
-              break;
+      std::vector<int> fetch_status;
+      switch (mAsynType) {
+        case asynParamInt32: {
+          std::vector<int> dummy;
+          fetch_status = fetch(dummy);
+          break;
         }
-        status |= std::accumulate(fetch_status.begin(), fetch_status.end(), 0);
-        status |= setConnectedStatus(fetch_status);
-    }
-    else {
-        switch(mAsynType)
-        {
-            case asynParamInt32:
-            {
-                int dummy;
-                status = fetch(dummy);
-                break;
-            }
-            case asynParamFloat64:
-            {
-                double dummy;
-                status = fetch(dummy);
-                break;
-            }
-            case asynParamOctet:
-            {
-                std::string dummy;
-                status = fetch(dummy);
-                break;
-            }
-            default:
-              break;
+        case asynParamFloat64: {
+          std::vector<double> dummy;
+          fetch_status = fetch(dummy);
+          break;
         }
-        status |= setConnectedStatus(status);
+        case asynParamOctet: {
+          std::vector<std::string> dummy;
+          fetch_status = fetch(dummy);
+          break;
+        }
+        default:break;
+      }
+      status |= std::accumulate(fetch_status.begin(), fetch_status.end(), 0);
+      status |= setConnectedStatus(fetch_status);
+    } else {
+      switch (mAsynType) {
+        case asynParamInt32: {
+          int dummy;
+          status = fetch(dummy);
+          break;
+        }
+        case asynParamFloat64: {
+          double dummy;
+          status = fetch(dummy);
+          break;
+        }
+        case asynParamOctet: {
+          std::string dummy;
+          status = fetch(dummy);
+          break;
+        }
+        default:break;
+      }
+      status |= setConnectedStatus(status);
     }
     if (status == 0) {
-        mErrorFilter->clearErrors();
+      mErrorFilter->clearErrors();
     }
-    return status;
+  }
+  return status;
 }
 
 int RestParam::push()
