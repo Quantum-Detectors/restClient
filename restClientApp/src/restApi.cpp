@@ -20,7 +20,7 @@
 #define DATA_HTML               "text/html"
 
 #define MAX_HTTP_RETRIES        1
-#define MAX_MESSAGE_SIZE        2048
+#define MAX_MESSAGE_SIZE        8192
 #define MAX_BUF_SIZE            256
 #define MAX_JSON_TOKENS         100
 
@@ -285,6 +285,13 @@ int RestAPI::doRequest (const request_t *request, response_t *response, int time
     {
         close(s->fd);
         s->closed = true;
+    }
+
+    if (response->contentLength > MAX_MESSAGE_SIZE) {
+        // We stored MAX_MESSAGE_SIZE bytes into our buffer and the rest could not fit
+        // The buffer contents will be malformed by an abrupt cut-off and will not be parseable
+        status = EXIT_FAILURE;
+        goto end;
     }
 
     // We successfully completed a request, so connection to server must be OK
