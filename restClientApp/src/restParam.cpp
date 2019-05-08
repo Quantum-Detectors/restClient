@@ -292,9 +292,14 @@ std::string RestParam::toString (bool value)
 
 std::string RestParam::toString (int value)
 {
-    if(mType == REST_P_ENUM)
+    const char *functionName = "toString";
+    if(mType == REST_P_ENUM){
+        if ((size_t)value >= mEnumValues.size()){
+            ERROR("Value '" << value << "' is out of range; no enum value at this index");
+            return "";
+        }
         return toString(mEnumValues[value]);
-
+    }
     std::ostringstream os;
     os << value;
     return os.str();
