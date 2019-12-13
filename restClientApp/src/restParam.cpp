@@ -650,17 +650,19 @@ int RestParam::baseFetch(string & rawValue)
     mSet->getApi()->get(mSubSystem, mName, buffer, mTimeout);
 
     // Parse JSON
-    struct json_token tokens[MAX_JSON_TOKENS];
+    struct json_token *tokens = new struct json_token[MAX_JSON_TOKENS];
     int err = parse_json(buffer.c_str(), buffer.size(), tokens, MAX_JSON_TOKENS);
     if(err < 0)
     {
         ERROR("Failed to parse json response:\n'" << buffer << "'");
+        delete[] tokens;
         return EXIT_FAILURE;
     }
 
     if (!mInitialised) {
         if (initialise(tokens)) {
             ERROR("Failed to initialise param from response:\n'" << buffer << "'");
+            delete[] tokens;
             return EXIT_FAILURE;
         }
     }
@@ -668,9 +670,11 @@ int RestParam::baseFetch(string & rawValue)
     if(parseValue(tokens, rawValue))
     {
         ERROR("Failed to parse raw value from response:\n'" << buffer << "'");
+        delete[] tokens;
         return EXIT_FAILURE;
     }
 
+    delete[] tokens;
     FLOW_ARGS("%s", rawValue.c_str());
     return EXIT_SUCCESS;
 }
@@ -691,17 +695,19 @@ int RestParam::baseFetch(std::vector<std::string>& rawValue)
     mSet->getApi()->get(mSubSystem, mName, buffer, mTimeout);
 
     // Parse JSON
-    struct json_token tokens[MAX_JSON_TOKENS];
+    struct json_token *tokens = new struct json_token[MAX_JSON_TOKENS];
     int err = parse_json(buffer.c_str(), buffer.size(), tokens, MAX_JSON_TOKENS);
     if(err < 0)
     {
         ERROR("Unable to parse json response\n'" << buffer << "'");
+        delete[] tokens;
         return EXIT_FAILURE;
     }
 
     if (!mInitialised) {
         if (initialise(tokens)) {
             ERROR("Failed to initialise param from response:\n'" << buffer << "'");
+            delete[] tokens;
             return EXIT_FAILURE;
         }
     }
@@ -710,11 +716,13 @@ int RestParam::baseFetch(std::vector<std::string>& rawValue)
     if(valueArray.empty())
     {
         ERROR("Failed to parse raw value array from response:\n'" << buffer << "'");
+        delete[] tokens;
         return EXIT_FAILURE;
     }
     for (int index = 0; (size_t) index != valueArray.size(); ++index) {
         if (valueArray[index] == "null") {
             ERROR("Failed to parse raw value from array:\n'" << buffer << "'");
+            delete[] tokens;
             return EXIT_FAILURE;
         }
     }
@@ -724,6 +732,7 @@ int RestParam::baseFetch(std::vector<std::string>& rawValue)
         rawValue[index] = valueArray[index];
     }
 
+    delete[] tokens;
     return EXIT_SUCCESS;
 }
 
@@ -1184,7 +1193,7 @@ int RestParam::push()
 int RestParam::basePut(const std::string & rawValue, int index)
 {
     const char *functionName = "basePut";
-   FLOW_ARGS("'%s'", rawValue.c_str());
+    FLOW_ARGS("'%s'", rawValue.c_str());
     if(mAccessMode == REST_ACC_RO)
     {
         ERROR_IDX("Can't write to read-only parameter", index);
@@ -1209,15 +1218,17 @@ int RestParam::basePut(const std::string & rawValue, int index)
     // Parse JSON
     if(!reply.empty())
     {
-        struct json_token tokens[MAX_JSON_TOKENS];
+        struct json_token *tokens = new struct json_token[MAX_JSON_TOKENS];
         int err = parse_json(reply.c_str(), reply.size(), tokens, MAX_JSON_TOKENS);
         if(err < 0)
         {
             ERROR("Unable to parse json response\n'" << reply << "'");
+            delete[] tokens;
             return EXIT_FAILURE;
         }
 
         mSet->fetchParams(parseArray(tokens));
+        delete[] tokens;
     }
     return EXIT_SUCCESS;
 }
