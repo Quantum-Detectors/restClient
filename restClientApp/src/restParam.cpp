@@ -884,6 +884,14 @@ std::vector<int> RestParam::fetch(std::vector<int>& value)
         }
 
         value.resize(mArraySize);
+        if (rawValue.size() != value.size()){
+            ERROR("Expected array size ["
+            << value.size()
+            << "] does not match returned array size ["
+            << rawValue.size()
+            << "]");
+            return status;
+        }
         for (int index = 0; (size_t) index != rawValue.size(); ++index) {
             if (mType == REST_P_ENUM) {
                 size_t eIndex;
@@ -968,6 +976,14 @@ std::vector<int> RestParam::fetch(std::vector<double>& value)
             ERROR("Underlying baseFetch failed");
             return status;
         }
+        if (rawValue.size() != value.size()){
+            ERROR("Expected array size ["
+            << value.size()
+            << "] does not match returned array size ["
+            << rawValue.size()
+            << "]");
+            return status;
+        }
 
         for (size_t index = 0; index != rawValue.size(); ++index) {
             status[index] = parseValue(rawValue[index], value[index]);
@@ -1026,6 +1042,14 @@ std::vector<int> RestParam::fetch(std::vector<std::string>& value)
 
         if(baseFetch(value)) {
             ERROR("Underlying baseFetch failed");
+            return status;
+        }
+        if (status.size() != value.size()){
+            ERROR("Expected array size ["
+            << status.size()
+            << "] does not match returned array size ["
+            << value.size()
+            << "]");
             return status;
         }
 
