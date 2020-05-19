@@ -78,6 +78,11 @@ RestAPI::RestAPI (string const & hostname, int port, size_t numSockets) :
         mSockets[i].retries = 0;
     }
 }
+RestAPI::~RestAPI()
+{
+    delete[] this->mSockets;
+    delete this->mErrorFilter;
+}
 
 int RestAPI::connectedSockets()
 {
@@ -114,11 +119,12 @@ int RestAPI::connect (socket_t *s)
         // Connection actually failed
         if(errno != EINPROGRESS)
         {
-            char error[MAX_BUF_SIZE];
+            char* error = new char[MAX_BUF_SIZE];
             epicsSocketConvertErrnoToString(error, sizeof(error));
             ERROR("Failed to connect to " << mHostname.c_str() << ":" << mPort <<
                   " [" << error << "]");
             epicsSocketDestroy(s->fd);
+            delete[] error;
             return EXIT_FAILURE;
         }
         // Server didn't respond immediately, wait a little
@@ -146,11 +152,12 @@ int RestAPI::connect (socket_t *s)
             // Socket changed state - check if we are now connected
             else if(::connect(s->fd, (struct sockaddr*)&mAddress, sizeof(mAddress)) < 0) {
                 // Still not connected; socket state changed straight to `Failed`
-                char error[MAX_BUF_SIZE];
+                char* error = new char[MAX_BUF_SIZE];
                 epicsSocketConvertErrnoToString(error, sizeof(error));
                 ERROR("Failed to connect to " << mHostname.c_str() << ":" << mPort <<
                       " [" << error << "]");
                 epicsSocketDestroy(s->fd);
+                delete[] error;
                 return EXIT_FAILURE;
             }
         }
@@ -274,6 +281,7 @@ int RestAPI::doRequest (const request_t *request, response_t *response, int time
     }
 
     response->actualLen = (size_t) received;
+    response->data[MAX_MESSAGE_SIZE] = 0; // add null character at end
 
     if((status = parseHeader(response)))
     {
@@ -346,9 +354,10 @@ int RestAPI::parseHeader (response_t *response)
             sscanf(colon + 1, "%lu", &response->contentLength);
         else if(!strcasecmp(key, "connection"))
         {
-            char value[MAX_BUF_SIZE];
+            char* value = new char[MAX_BUF_SIZE];
             sscanf(colon + 1, "%s", value);
             response->reconnect = !strcasecmp(value, "close");
+            delete[] value;
         }
 
         data = eol + EOL_LEN;
@@ -367,13 +376,8 @@ int RestAPI::parseHeader (response_t *response)
 int RestAPI::put (std::string subSystem, string const & param,
         string const & value,string * reply, int timeout)
 {
-
-    int valueLen = 0;
-    char valueBuf[MAX_BUF_SIZE] = "";
-    if(!value.empty())
-        valueLen = epicsSnprintf(valueBuf, sizeof(valueBuf), value.c_str());
-
-    return basePut(subSystem, param, valueBuf, valueLen, reply, timeout);
+    int status = basePut(subSystem, param, value.c_str(), value.length(), reply, timeout);
+    return status;
 }
 
 int RestAPI::put(std::string subSystem, const std::string & param,
@@ -381,80 +385,99 @@ int RestAPI::put(std::string subSystem, const std::string & param,
                  std::string * reply, int timeout)
 {
 
-  int valueLen = 0;
-  char valueBuf[MAX_BUF_SIZE] = "";
+  char* valueBuf = new char[MAX_BUF_SIZE];
 
   JsonDict valueDict = JsonDict(key, value.c_str());
 
-  valueLen = epicsSnprintf(valueBuf, sizeof(valueBuf),
-                           valueDict.str().c_str(), key.c_str(), value.c_str());
+  int valueLen = epicsSnprintf(valueBuf, sizeof(valueBuf),
+                               valueDict.str().c_str(), key.c_str(), value.c_str());
 
-  return basePut(subSystem, param, valueBuf, valueLen, reply, timeout);
+  int rc = basePut(subSystem, param, valueBuf, valueLen, reply, timeout);
+  delete[] valueBuf;
+  return rc;
 }
 
-int RestAPI::get (std::string subSystem, string const & param, string & value, int timeout)
+int RestAPI::get(std::string subSystem, string const & param, string & value, int timeout)
 {
     request_t request = {};
-    char requestBuf[MAX_MESSAGE_SIZE];
-    request.data      = requestBuf;
-    request.dataLen   = sizeof(requestBuf);
+    char* requestBuf = new char[MAX_MESSAGE_SIZE];
+    request.data = requestBuf;
+    request.dataLen = MAX_MESSAGE_SIZE;
     request.actualLen = epicsSnprintf(request.data, request.dataLen,
             REQUEST_GET, subSystem.c_str(), param.c_str(), mHostname.c_str());
 
     response_t response = {};
-    char responseBuf[MAX_MESSAGE_SIZE];
-    response.data    = responseBuf;
-    response.dataLen = sizeof(responseBuf);
+    char* responseBuf = new char[MAX_MESSAGE_SIZE];
+    response.data = responseBuf;
+    response.dataLen = MAX_MESSAGE_SIZE;
 
     if(doRequest(&request, &response, timeout))
     {
+        delete[] requestBuf;
+        delete[] responseBuf;
         return EXIT_FAILURE;
     }
 
     if(response.code != 200)
     {
+        delete[] requestBuf;
+        delete[] responseBuf;
         return EXIT_FAILURE;
     }
 
     value = string(response.content, response.contentLength);
+    delete[] requestBuf;
+    delete[] responseBuf;
     return EXIT_SUCCESS;
 }
 
-int RestAPI::basePut(std::string subSystem, const std::string & param,
-                     char * valueBuf, int valueLen, string * reply, int timeout)
+int RestAPI::basePut(std::string & subSystem, const std::string & param,
+                     const char * valueBuf, int valueLen, string * reply, int timeout)
 {
   int headerLen;
-  char header[MAX_BUF_SIZE];
-  headerLen = epicsSnprintf(header, sizeof(header), REQUEST_PUT,
+  char* header = new char[MAX_BUF_SIZE];
+  headerLen = epicsSnprintf(header, MAX_BUF_SIZE, REQUEST_PUT,
                             subSystem.c_str(), param.c_str(), mHostname.c_str(),
                             (size_t)valueLen);
 
   request_t request = {};
-  char requestBuf[headerLen + valueLen];
+  char* requestBuf = new char[headerLen + valueLen];
+
   request.data      = requestBuf;
   request.dataLen   = headerLen + valueLen;
   request.actualLen = request.dataLen;
 
   response_t response = {};
-  char responseBuf[MAX_MESSAGE_SIZE];
+  char* responseBuf = new char[MAX_MESSAGE_SIZE];
+
   response.data    = responseBuf;
-  response.dataLen = sizeof(responseBuf);
+  response.dataLen = MAX_MESSAGE_SIZE;
 
   memcpy(request.data, header, headerLen);
   memcpy(request.data + headerLen, valueBuf, valueLen);
 
   if(doRequest(&request, &response, timeout))
   {
+    delete[] responseBuf;
+    delete[] requestBuf;
+    delete[] header;
     return EXIT_FAILURE;
   }
 
   if(response.code != 200)
   {
+    delete[] responseBuf;
+    delete[] requestBuf;
+    delete[] header;
     return EXIT_FAILURE;
   }
 
   if(reply)
     *reply = string(response.content, response.contentLength);
+  delete[] responseBuf;
+  delete[] requestBuf;
+  delete[] header;
+
   return EXIT_SUCCESS;
 }
 

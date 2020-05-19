@@ -61,6 +61,7 @@ public:
     static const std::string PARAM_CRITICAL_VALUES;
 
     RestAPI (std::string const & hostname, int port = 80, size_t numSockets=5);
+    ~RestAPI();
 
     int get (std::string subSystem, std::string const & param, std::string & value, int timeout = DEFAULT_TIMEOUT);
     // Put with just value -> Payload: <value>
@@ -76,8 +77,8 @@ public:
           std::string subSystem, rest_access_mode_t &accessMode) = 0;
 
  private:
-  int basePut(std::string subSystem, std::string const & param,
-              char * valueBuf, int valueLen,
+  int basePut(std::string &subSystem, std::string const & param,
+              const char * valueBuf, int valueLen,
               std::string * reply = NULL, int timeout = DEFAULT_TIMEOUT);
 
   ErrorFilter* mErrorFilter;
