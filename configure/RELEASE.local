@@ -3,4 +3,4 @@ EPICS_BASE = /dls_sw/epics/R3.14.12.7/base
 SUPPORT = /dls_sw/prod/R3.14.12.7/support
 #WORK    = /dls_sw/work/R3.14.12.7/support
 
-ASYN = $(SUPPORT)/asyn/4-37
+ASYN = $(SUPPORT)/asyn/4-39
