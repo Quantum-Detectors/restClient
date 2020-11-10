@@ -384,16 +384,9 @@ int RestAPI::put(std::string subSystem, const std::string & param,
                  const std::string & key, const std::string & value,
                  std::string * reply, int timeout)
 {
-
-  char* valueBuf = new char[MAX_BUF_SIZE];
-
   JsonDict valueDict = JsonDict(key, value.c_str());
 
-  int valueLen = epicsSnprintf(valueBuf, sizeof(valueBuf),
-                               valueDict.str().c_str(), key.c_str(), value.c_str());
-
-  int rc = basePut(subSystem, param, valueBuf, valueLen, reply, timeout);
-  delete[] valueBuf;
+  int rc = put(subSystem, param, valueDict.str(), reply, timeout);
   return rc;
 }
 
