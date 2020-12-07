@@ -36,7 +36,7 @@
 
 #define MAX_BUFFER_SIZE 128
 #define MAX_MESSAGE_SIZE 512
-#define MAX_JSON_TOKENS 100
+#define MAX_JSON_TOKENS 200
 
 using std::string;
 using std::vector;
