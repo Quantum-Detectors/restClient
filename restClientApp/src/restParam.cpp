@@ -381,12 +381,14 @@ int RestParam::setParamStatus(int status, int address)
 
 int RestParam::setConnectedStatus(int status)
 {
+    printf("Setting connection status of single element\n");
     mConnected[0] = (bool) status == 0;
     return setParamStatus(status);
 }
 
 int RestParam::setConnectedStatus(std::vector<int> status)
 {
+    printf("Setting connection status of all elements\n");
     int _status = 0;
     for (int index = 0; (size_t) index < mArraySize; ++index) {
         mConnected[index] = (bool) status[index] == 0;
@@ -453,6 +455,8 @@ RestParam::RestParam(RestParamSet * set, const std::string& asynName, rest_param
             ERROR("Invalid REST type " << (int) restType);
             throw std::runtime_error(mAsynName);
     }
+
+    // Check if the array size passed is zero - if so then we need to make sure mConnected
 
     bindAsynParam();
     setTimeout(DEFAULT_TIMEOUT);
