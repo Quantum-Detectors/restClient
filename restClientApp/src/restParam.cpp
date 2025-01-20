@@ -454,6 +454,10 @@ RestParam::RestParam(RestParamSet * set, const std::string& asynName, rest_param
             throw std::runtime_error(mAsynName);
     }
 
+    // Check if the array size passed is zero so we can ensure mConnected has 1
+    // element to prevent a segmentation fault during fetch
+    if (mArraySize == 0) mConnected.push_back(false);
+
     bindAsynParam();
     setTimeout(DEFAULT_TIMEOUT);
 }
